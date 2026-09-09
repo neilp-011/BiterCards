@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitercards — Compra y vende tarjetas de regalo y USDT</title>
+<meta name="description" content="Bitercards: compra tarjetas de regalo o conviértete en vendedor y gana comisión ayudando a otros a cambiar las suyas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --surface:#F6F6F1;
+    --ink:#111111;
+    --green:#1DB954;
+    --blue:#2451E0;
+    --gold:#E8B93B;
+    --line:#111111;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', Arial, sans-serif;
+    line-height:1.6;
+  }
+  h1,h2,h3{
+    font-family:'Baloo 2', 'Inter', sans-serif;
+    font-weight:700;
+    line-height:1.1;
+    margin:0 0 16px 0;
+    color:var(--ink);
+  }
+  p{margin:0 0 12px 0; color:#3A3A3A;}
+  a{color:inherit; text-decoration:none;}
+  ul{margin:0; padding:0; list-style:none;}
+  .wrap{max-width:900px; margin:0 auto; padding:0 24px;}
+  section{padding:64px 0; border-top:3px solid var(--line);}
+
+  a:focus-visible, button:focus-visible{outline:3px solid var(--blue); outline-offset:3px;}
+  @media (prefers-reduced-motion: reduce){*{transition:none !important;}}
+
+  /* ---------- Botones estilo pegatina ---------- */
+  .btn{
+    display:inline-block;
+    padding:14px 26px;
+    background:var(--green);
+    color:var(--ink);
+    font-weight:700;
+    font-family:'Baloo 2', sans-serif;
+    border:3px solid var(--line);
+    border-radius:12px;
+    cursor:pointer;
+    font-size:15px;
+    box-shadow:5px 5px 0 var(--ink);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink);}
+  .btn-blue{background:var(--blue); color:#fff;}
+  .btn-gold{background:var(--gold);}
+  .btn-ghost{
+    background:#fff; border:3px solid var(--line); border-radius:12px;
+    padding:14px 26px; font-size:15px; font-family:'Baloo 2', sans-serif; font-weight:700;
+    box-shadow:5px 5px 0 var(--ink); cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-ghost:hover{transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink);}
+
+  /* ---------- Header ---------- */
+  .site-top{
+    position:sticky;
+    top:0;
+    z-index:30;
+    background:var(--bg);
+    box-shadow:0 2px 10px rgba(17,17,17,0.05);
+  }
+  header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:12px 24px;
+    border-bottom:1px solid #E4E4E0;
+    background:var(--bg);
+  }
+  .menu-btn{
+    background:var(--gold);
+    border:2px solid var(--line);
+    border-radius:8px;
+    color:var(--ink);
+    font-size:16px;
+    line-height:1;
+    padding:7px 11px;
+    cursor:pointer;
+    box-shadow:3px 3px 0 var(--ink);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .menu-btn:hover{transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink);}
+  .brand{font-family:'Baloo 2', sans-serif; font-weight:800; font-size:22px;}
+  .brand span{color:var(--green);}
+
+  /* ---------- Header: selector país / idioma / carrito ---------- */
+  .header-right{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-left:auto;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .header-right .divider{width:1px; height:20px; background:#DADAD4;}
+  .loc-select, .lang-select{
+    display:flex; align-items:center; gap:6px;
+    cursor:pointer; white-space:nowrap;
+  }
+  .lang-wrap{position:relative;}
+  .lang-select{
+    background:none; border:none; font:inherit; color:inherit;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:14px;
+  }
+  .lang-menu{
+    position:absolute; top:calc(100% + 10px); right:0;
+    background:#fff; border:1px solid #E4E4E0; border-radius:10px;
+    box-shadow:0 8px 24px rgba(17,17,17,0.12);
+    padding:6px; min-width:130px;
+    display:none; flex-direction:column; gap:2px;
+    z-index:35;
+  }
+  .lang-menu.open{display:flex;}
+  .lang-menu button{
+    background:none; border:none; text-align:left; cursor:pointer;
+    padding:9px 12px; border-radius:7px;
+    font-family:'Inter', sans-serif; font-size:14px; font-weight:600; color:var(--ink);
+  }
+  .lang-menu button:hover{background:var(--surface);}
+  .lang-menu button.active{background:rgba(36,81,224,0.1); color:var(--blue);}
+  .loc-select .flag{
+    width:20px; height:20px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:13px; overflow:hidden; flex-shrink:0;
+  }
+  .cart-btn{
+    position:relative;
+    background:none; border:none; cursor:pointer;
+    color:var(--ink); padding:4px; line-height:1;
+    display:flex; align-items:center;
+  }
+  .cart-btn svg{width:24px; height:24px;}
+  .cart-badge{
+    position:absolute; top:-6px; right:-6px;
+    background:var(--gold);
+    color:var(--ink);
+    border:2px solid var(--line);
+    border-radius:999px;
+    font-size:10px; font-weight:800;
+    min-width:18px; height:18px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2', sans-serif;
+  }
+  @media (max-width:600px){
+    .loc-select span:not(.flag), .header-right .divider:first-of-type{display:none;}
+  }
+
+  /* ---------- Barra de búsqueda debajo del header ---------- */
+  .searchbar-wrap{
+    padding:10px 24px 8px;
+    background:var(--bg);
+  }
+  .searchbar{
+    max-width:900px;
+    margin:0 auto;
+    position:relative;
+  }
+  .searchbar input{
+    width:100%;
+    background:var(--surface);
+    border:1px solid #DADAD4;
+    border-radius:10px;
+    padding:10px 16px 10px 42px;
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .searchbar input:focus{border-color:var(--blue); outline:none;}
+  .searchbar input::placeholder{color:#8A8A82;}
+  .searchbar .search-ico{
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    color:#8A8A82; display:flex;
+  }
+  .searchbar .search-ico svg{width:18px; height:18px;}
+
+  /* ---------- Menú lateral (drawer) ---------- */
+  #overlay{
+    position:fixed; inset:0;
+    background:rgba(17,17,17,0.45);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:40;
+  }
+  #overlay.open{opacity:1; pointer-events:auto;}
+
+  #drawer{
+    position:fixed;
+    top:0; left:0; bottom:0;
+    width:300px;
+    max-width:85vw;
+    background:#fff;
+    border-right:1px solid #E4E4E0;
+    box-shadow:8px 0 24px rgba(0,0,0,0.08);
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    z-index:50;
+    padding:20px 20px 24px;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+  }
+  #drawer.open{transform:translateX(0);}
+  .drawer-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:18px;
+  }
+  #closeDrawer{
+    background:none; border:none;
+    color:var(--ink); font-size:22px; cursor:pointer; padding:4px 6px; line-height:1;
+  }
+  .drawer-banner{
+    display:flex; align-items:center; gap:14px;
+    background:var(--ink);
+    color:#fff;
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:20px;
+  }
+  .drawer-banner .icon{
+    width:34px; height:34px; border-radius:8px;
+    background:rgba(255,255,255,0.12);
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; flex-shrink:0;
+  }
+  .drawer-banner strong{display:block; font-family:'Inter', sans-serif; font-weight:700; font-size:13.5px; letter-spacing:.01em;}
+  .drawer-banner span{display:block; font-size:12px; color:#C9C9C9; margin-top:2px;}
+  .drawer-banner .arrow{margin-left:auto; opacity:.7; font-size:15px;}
+
+  #drawer nav{margin-top:6px;}
+  #drawer nav a{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 8px;
+    border-bottom:1px solid #ECECE8;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    color:var(--ink);
+    border-radius:8px;
+    transition:background .12s ease;
+  }
+  #drawer nav a:hover{background:var(--surface);}
+  #drawer nav a .ico{
+    width:34px; height:34px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  #drawer nav a .ico svg{width:17px; height:17px;}
+  #drawer nav a:nth-child(1) .ico{background:rgba(29,185,84,0.12); color:#1A9A47;}
+  #drawer nav a:nth-child(2) .ico{background:rgba(232,185,59,0.16); color:#9A7A16;}
+  #drawer nav a:nth-child(3) .ico{background:rgba(36,81,224,0.12); color:var(--blue);}
+
+  .drawer-help{
+    margin-top:auto;
+    padding-top:20px;
+  }
+  .drawer-help a{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:var(--surface);
+    border:1px solid #E4E4E0;
+    border-radius:10px;
+    padding:13px 16px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink);
+    transition:background .12s ease, border-color .12s ease;
+  }
+  .drawer-help a:hover{background:#fff; border-color:#D4D4CE;}
+  .drawer-help .ico{
+    width:30px; height:30px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid #E4E4E0;
+  }
+  .drawer-help .ico svg{width:15px; height:15px;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:16px 0 32px; border-top:none;}
+  .hero-box{
+    background:linear-gradient(135deg, rgba(36,81,224,0.08), rgba(232,185,59,0.10) 50%, rgba(29,185,84,0.08));
+    border:2px solid rgba(17,17,17,0.08);
+    border-radius:24px;
+    padding:26px 32px 30px;
+    text-align:center;
+    max-width:680px;
+    margin:0 auto;
+    box-shadow:0 12px 0 -6px rgba(17,17,17,0.05), 0 20px 40px rgba(17,17,17,0.06);
+  }
+  .hero-box .badge{margin-bottom:12px;}
+  .hero-box h1{margin-bottom:10px;}
+  .hero-box p{margin-bottom:6px;}
+  .hero-box .actions{justify-content:center; margin-top:16px;}
+  .hero-box p{margin-left:auto; margin-right:auto;}
+  .hero .badge{
+    display:inline-block;
+    background:var(--gold);
+    border:3px solid var(--line);
+    border-radius:999px;
+    padding:6px 16px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:13px;
+    margin-bottom:18px;
+    transform:rotate(-2deg);
+  }
+  .hero h1{font-size:clamp(32px,5.5vw,48px); max-width:16ch; margin-left:auto; margin-right:auto;}
+  .hero h1 .hl{background:var(--green); padding:0 8px; border-radius:6px; box-decoration-break:clone; -webkit-box-decoration-break:clone;}
+  .hero p{font-size:17px; max-width:48ch;}
+  .hero .actions{display:flex; gap:14px; margin-top:22px; flex-wrap:wrap;}
+
+  /* ---------- Secciones ---------- */
+  .tag{
+    display:inline-block;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink);
+    background:var(--surface);
+    border:2px solid var(--line);
+    border-radius:999px;
+    padding:5px 14px;
+    margin-bottom:14px;
+  }
+  .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:24px;}
+  .card{
+    background:var(--surface);
+    border:3px solid var(--line);
+    border-radius:14px;
+    padding:20px 20px;
+    box-shadow:5px 5px 0 var(--ink);
+  }
+  .card h3{font-size:17px; margin-bottom:6px;}
+  .card p{margin:0; font-size:14.5px;}
+  .card.green{border-color:var(--line); box-shadow:5px 5px 0 var(--green);}
+  .card.blue{box-shadow:5px 5px 0 var(--blue);}
+  .card.gold{box-shadow:5px 5px 0 var(--gold);}
+  @media (max-width:760px){
+    .cards{grid-template-columns:1fr;}
+  }
+
+  form{display:flex; flex-direction:column; gap:14px; max-width:440px; margin-top:24px;}
+  label{font-size:13px; font-weight:600; color:var(--ink); display:block; margin-bottom:6px;}
+  input, select{
+    width:100%;
+    background:#fff;
+    border:3px solid var(--line);
+    border-radius:10px;
+    color:var(--ink);
+    padding:12px 14px;
+    font-family:inherit;
+    font-size:14.5px;
+  }
+  .form-msg{
+    margin-top:10px; font-size:14px; font-weight:600; color:var(--ink);
+    background:var(--green); border:3px solid var(--line); border-radius:10px;
+    padding:10px 14px; display:none;
+  }
+  .form-msg.show{display:block;}
+  .form-error{
+    margin-top:10px; font-size:14px; font-weight:600; color:#8A1F1F;
+    background:#FCE4E4; border:1px solid #E7A9A9; border-radius:10px;
+    padding:10px 14px; display:none;
+  }
+  .form-error.show{display:block;}
+  .form-switch{margin-top:14px; font-size:14px; color:#555;}
+  .form-switch a{color:var(--blue); font-weight:700; text-decoration:underline;}
+
+  /* ---------- Modal de login ---------- */
+  .modal-overlay{
+    display:none;
+    position:fixed; inset:0; z-index:100;
+    background:rgba(17,17,17,0.5);
+    align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--bg);
+    border-radius:16px;
+    padding:28px 24px;
+    max-width:400px; width:100%;
+    position:relative;
+    box-shadow:0 20px 50px rgba(17,17,17,0.25);
+  }
+  .modal-box h3{font-family:'Baloo 2', sans-serif; font-size:22px; margin-bottom:16px;}
+  .modal-close{
+    position:absolute; top:14px; right:14px;
+    background:none; border:none; font-size:18px; cursor:pointer; color:#777;
+  }
+  #loginForm div{margin-bottom:14px;}
+  #loginForm label{display:block; font-size:13.5px; font-weight:600; margin-bottom:5px;}
+  #loginForm input{
+    width:100%; background:var(--surface); border:1px solid #DADAD4;
+    border-radius:10px; padding:12px 14px; font-family:inherit; font-size:14.5px;
+  }
+  .account-menu{
+    position:absolute; top:calc(100% + 10px); right:24px;
+    background:#fff; border:1px solid #E4E4E0; border-radius:10px;
+    box-shadow:0 8px 24px rgba(17,17,17,0.12);
+    padding:14px 16px; min-width:220px;
+    display:none; z-index:35; font-size:14px;
+  }
+  .account-menu.open{display:block;}
+  .account-menu .acc-name{font-weight:800; font-family:'Baloo 2', sans-serif; font-size:15px;}
+  .account-menu .acc-email{color:#777; font-size:12.5px; margin-bottom:8px; word-break:break-all;}
+  .account-menu .acc-balance{
+    background:var(--surface); border-radius:8px; padding:8px 10px;
+    font-weight:700; margin:8px 0; font-size:13.5px;
+  }
+  .account-menu .acc-status{
+    font-size:12.5px; padding:8px 10px; border-radius:8px; margin-bottom:8px;
+  }
+  .account-menu .acc-status.warn{background:#FFF4DA; color:#8A6A16;}
+  .account-menu .acc-btn{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    color:var(--blue); font-weight:600; cursor:pointer; padding:6px 0; font-size:13.5px;
+  }
+  .account-menu .acc-btn.danger{color:#B33;}
+  .avatar-chip{
+    width:26px; height:26px; border-radius:50%;
+    background:var(--blue); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:12px; font-family:'Baloo 2', sans-serif;
+  }
+  .cart-btn.unverified{color:#C08A16;}
+
+  footer{padding:28px 0; border-top:3px solid var(--line); font-size:13px; color:#3A3A3A; text-align:center;}
+</style>
+</head>
+<body>
+
+<div id="overlay"></div>
+<div id="drawer">
+  <div class="drawer-head">
+    <span class="brand">Bit<span>er</span>cards</span>
+    <button id="closeDrawer" aria-label="Cerrar menú">✕</button>
+  </div>
+  <nav>
+    <a href="#comprar">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+      <span data-i18n="navComprar">Comprar gift cards</span>
+    </a>
+    <a href="#vendedor">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-6 7 6v12"/><path d="M9 21v-6h6v6"/></svg></span>
+      <span data-i18n="navVendedor">Conviértete en vendedor</span>
+    </a>
+    <a href="#nosotros">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+      <span data-i18n="navNosotros">Acerca de nosotros</span>
+    </a>
+  </nav>
+
+  <div class="drawer-help">
+    <a href="#">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg></span>
+      <span data-i18n="navAyuda">Ayuda</span>
+    </a>
+  </div>
+</div>
+
+<div class="site-top">
+<header>
+  <button class="menu-btn" id="openDrawer" aria-label="Abrir menú">☰</button>
+  <span class="brand">Bit<span>er</span>cards</span>
+  <div class="header-right">
+    <span class="loc-select"><span class="flag">🇵🇦</span><span data-i18n="loc">Panamá</span></span>
+    <span class="divider"></span>
+    <div class="lang-wrap">
+      <button class="lang-select" id="langBtn" aria-haspopup="true" aria-expanded="false">
+        <span id="langBtnText">ES</span>
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="lang-menu" id="langMenu">
+        <button data-lang="es">Español</button>
+        <button data-lang="en">English</button>
+      </div>
+    </div>
+    <span class="divider"></span>
+    <button class="cart-btn" id="accountBtn" aria-label="Cuenta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+    <span class="divider"></span>
+    <button class="cart-btn" aria-label="Carrito">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="cart-badge">0</span>
+    </button>
+  </div>
+</header>
+
+<div class="account-menu" id="accountMenu"></div>
+
+<div class="searchbar-wrap">
+  <div class="searchbar">
+    <span class="search-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+    <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Buscar tarjetas de regalo o USDT">
+  </div>
+</div>
+</div>
+
+<main>
+  <div class="wrap hero">
+    <div class="hero-box">
+      <span class="badge" data-i18n="badge">🚀 sitio de preventa</span>
+      <h1><span data-i18n="heroPre">Convierte tus </span><span class="hl" data-i18n="heroHl">tarjetas de regalo</span><span data-i18n="heroPost"> en dinero real.</span></h1>
+      <p data-i18n="heroP">Compra y vende tarjetas de Google Play, Amazon, Steam e iTunes, o cambia USDT desde Binance y KuCoin.</p>
+      <div class="actions">
+        <a href="#comprar" class="btn" data-i18n="btnComprar">Comprar gift cards</a>
+        <a href="#vendedor" class="btn-ghost" data-i18n="btnVendedor">Conviértete en vendedor</a>
+      </div>
+    </div>
+  </div>
+
+  <section id="comprar">
+    <div class="wrap">
+      <span class="tag" data-i18n="tagTienda">Tienda directa</span>
+      <h2 data-i18n="h2Comprar">Comprar gift cards</h2>
+      <p data-i18n="pComprar">Estas las compramos nosotros al mayoreo y las vendemos con entrega automática en cuanto se confirma el pago.</p>
+      <div class="cards">
+        <div class="card green"><h3 data-i18n="cardGooglePlayTitle">Google Play</h3><p data-i18n="cardGooglePlayP">Códigos de cualquier denominación, entrega por correo.</p></div>
+        <div class="card blue"><h3 data-i18n="cardAmazonTitle">Amazon</h3><p data-i18n="cardAmazonP">Códigos de tienda de EE. UU. y México.</p></div>
+        <div class="card gold"><h3 data-i18n="cardUsdtTitle">USDT</h3><p data-i18n="cardUsdtP">Enviado directo a tu red seleccionada, Binance o KuCoin.</p></div>
+      </div>
+      <a href="#vendedor" class="btn btn-gold" style="margin-top:24px;" data-i18n="btnQuieroComprar">Quiero comprar</a>
+    </div>
+  </section>
+
+  <section id="nosotros">
+    <div class="wrap">
+      <span class="tag" data-i18n="tagNosotros">Acerca de nosotros</span>
+      <h2 data-i18n="h2Nosotros">Quiénes somos</h2>
+      <p data-i18n="pNosotros">Bitercards empieza como un proyecto pequeño con un solo dueño detrás, con la meta de crecer hasta convertirse en una app y, más adelante, una empresa que cotice en bolsa. Cada operación pasa por una verificación antes de liberar cualquier pago, para que tanto compradores como vendedores puedan confiar en la plataforma.</p>
+    </div>
+  </section>
+
+  <section id="vendedor">
+    <div class="wrap">
+      <span class="tag" data-i18n="tagVendedor">Para la comunidad</span>
+      <h2 data-i18n="h2Vendedor">Conviértete en vendedor</h2>
+      <p data-i18n="pVendedor">Publica lo que quieres cambiar, negocia con otro usuario y cierra la operación dentro de la plataforma. Bitercards cobra una comisión por servicio en cada transacción exitosa.</p>
+      <div class="cards">
+        <div class="card green"><h3 data-i18n="cardPublicaTitle">Publica en minutos</h3><p data-i18n="cardPublicaP">Sube tu tarjeta o tu USDT y define tu precio.</p></div>
+        <div class="card blue"><h3 data-i18n="cardOperacionTitle">Operación verificada</h3><p data-i18n="cardOperacionP">Bitercards confirma ambas partes antes de liberar el pago.</p></div>
+        <div class="card gold"><h3 data-i18n="cardRetirasTitle">Retiras cuando quieras</h3><p data-i18n="cardRetirasP">Tus ganancias quedan disponibles al cerrar cada operación.</p></div>
+      </div>
+
+      <form id="sellerForm">
+        <div>
+          <label for="name" data-i18n="labelNombre">Nombre</label>
+          <input type="text" id="name" data-i18n-placeholder="placeholderNombre" placeholder="Tu nombre" required>
+        </div>
+        <div>
+          <label for="email" data-i18n="labelCorreo">Correo</label>
+          <input type="email" id="email" data-i18n-placeholder="placeholderCorreo" placeholder="tucorreo@ejemplo.com" required>
+        </div>
+        <div>
+          <label for="password" data-i18n="labelPassword">Contraseña</label>
+          <input type="password" id="password" data-i18n-placeholder="placeholderPassword" placeholder="Mínimo 6 caracteres" minlength="6" required>
+        </div>
+        <div>
+          <label for="interest" data-i18n="labelInteres">¿Qué quieres vender?</label>
+          <select id="interest">
+            <option data-i18n="optTarjetas">Tarjetas de regalo</option>
+            <option data-i18n="optUsdt">USDT</option>
+            <option data-i18n="optAmbos">Ambos</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-blue" data-i18n="btnRegistrarme">Registrarme como vendedor</button>
+        <p class="form-msg" id="formMsg" data-i18n="formMsg">¡Cuenta creada! Te enviamos un correo para confirmar tu cuenta, revisa tu bandeja de entrada (o spam).</p>
+        <p class="form-error" id="formError"></p>
+        <p class="form-switch"><span data-i18n="yaTengoCuenta">¿Ya tienes cuenta?</span> <a href="#" id="showLoginLink" data-i18n="iniciarSesionLink">Inicia sesión</a></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div class="modal-overlay" id="loginOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="closeLoginModal" aria-label="Cerrar">✕</button>
+    <h3 data-i18n="loginTitle">Iniciar sesión</h3>
+    <form id="loginForm">
+      <div>
+        <label for="loginEmail" data-i18n="labelCorreo">Correo</label>
+        <input type="email" id="loginEmail" data-i18n-placeholder="placeholderCorreo" placeholder="tucorreo@ejemplo.com" required>
+      </div>
+      <div>
+        <label for="loginPassword" data-i18n="labelPassword">Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="••••••" required>
+      </div>
+      <button type="submit" class="btn btn-blue" data-i18n="btnIniciarSesion">Iniciar sesión</button>
+      <p class="form-error" id="loginError"></p>
+    </form>
+  </div>
+</div>
+
+<footer>
+  © <span id="year"></span> <span data-i18n="footerText">Bitercards. Sitio de preventa.</span>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+    sendEmailVerification,
+    updateProfile,
+    reload
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCp04dxbywcV73Fq2ZxPR9w1qynYgoVfxA",
+    authDomain: "bitercards.firebaseapp.com",
+    projectId: "bitercards",
+    storageBucket: "bitercards.firebasestorage.app",
+    messagingSenderId: "349114396593",
+    appId: "1:349114396593:web:daf7ddd384597ddac71790",
+    measurementId: "G-PEJLZJ6F4B"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const drawer = document.getElementById('drawer');
+  const overlay = document.getElementById('overlay');
+  const openBtn = document.getElementById('openDrawer');
+  const closeBtn = document.getElementById('closeDrawer');
+
+  function openDrawer(){
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  openBtn.addEventListener('click', openDrawer);
+  closeBtn.addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
+
+  // ---------- Mensajes de error de Firebase traducidos al español ----------
+  function traducirErrorFirebase(code){
+    const errores = {
+      'auth/email-already-in-use': 'Ese correo ya está registrado. Intenta iniciar sesión en vez de registrarte.',
+      'auth/invalid-email': 'El correo no es válido.',
+      'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+      'auth/wrong-password': 'Contraseña incorrecta.',
+      'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+      'auth/user-not-found': 'No existe una cuenta con ese correo.',
+      'auth/too-many-requests': 'Demasiados intentos. Espera un momento y vuelve a intentar.'
+    };
+    return errores[code] || 'Ocurrió un error, inténtalo de nuevo.';
+  }
+
+  // ---------- Registro de vendedor (crea cuenta real + guarda datos) ----------
+  const sellerForm = document.getElementById('sellerForm');
+  const formMsg = document.getElementById('formMsg');
+  const formError = document.getElementById('formError');
+
+  sellerForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    formError.classList.remove('show');
+    formMsg.classList.remove('show');
+
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const interest = document.getElementById('interest').value;
+
+    const submitBtn = sellerForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: name });
+      await setDoc(doc(db, 'vendedores', cred.user.uid), {
+        name: name,
+        email: email,
+        interest: interest,
+        createdAt: serverTimestamp()
+      });
+      await sendEmailVerification(cred.user);
+      formMsg.classList.add('show');
+      sellerForm.reset();
+    }catch(err){
+      formError.textContent = traducirErrorFirebase(err.code);
+      formError.classList.add('show');
+    }finally{
+      submitBtn.disabled = false;
+    }
+  });
+
+  // ---------- Login ----------
+  const loginOverlay = document.getElementById('loginOverlay');
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+  const showLoginLink = document.getElementById('showLoginLink');
+  const closeLoginModal = document.getElementById('closeLoginModal');
+
+  showLoginLink.addEventListener('click', function(e){
+    e.preventDefault();
+    loginOverlay.classList.add('show');
+  });
+  closeLoginModal.addEventListener('click', () => loginOverlay.classList.remove('show'));
+  loginOverlay.addEventListener('click', function(e){
+    if(e.target === loginOverlay) loginOverlay.classList.remove('show');
+  });
+
+  loginForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    loginError.classList.remove('show');
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    try{
+      await signInWithEmailAndPassword(auth, email, password);
+      loginOverlay.classList.remove('show');
+      loginForm.reset();
+    }catch(err){
+      loginError.textContent = traducirErrorFirebase(err.code);
+      loginError.classList.add('show');
+    }finally{
+      submitBtn.disabled = false;
+    }
+  });
+
+  // ---------- Estado de la cuenta (avatar, verificación, saldo) ----------
+  const accountBtn = document.getElementById('accountBtn');
+  const accountMenu = document.getElementById('accountMenu');
+
+  accountBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(auth.currentUser){
+      accountMenu.classList.toggle('open');
+    }else{
+      loginOverlay.classList.add('show');
+    }
+  });
+  document.addEventListener('click', () => accountMenu.classList.remove('open'));
+  accountMenu.addEventListener('click', (e) => e.stopPropagation());
+
+  function iniciales(nombre, correo){
+    const base = (nombre || correo || '?').trim();
+    return base.charAt(0).toUpperCase();
+  }
+
+  function renderAccountUI(user){
+    if(!user){
+      accountBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      accountBtn.classList.remove('unverified');
+      accountMenu.innerHTML = '';
+      accountMenu.classList.remove('open');
+      return;
+    }
+
+    if(!user.emailVerified){
+      accountBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      accountBtn.classList.add('unverified');
+      accountMenu.innerHTML = `
+        <div class="acc-email">${user.email}</div>
+        <div class="acc-status warn">Tu cuenta aún no está verificada. Revisa tu correo (o spam) y toca el link que te enviamos.</div>
+        <button class="acc-btn" id="resendVerifyBtn">Reenviar correo</button>
+        <button class="acc-btn" id="checkVerifyBtn">Ya verifiqué mi correo</button>
+        <button class="acc-btn danger" id="logoutBtn">Cerrar sesión</button>
+      `;
+      document.getElementById('resendVerifyBtn').addEventListener('click', async () => {
+        try{
+          await sendEmailVerification(user);
+          document.querySelector('.acc-status').textContent = 'Correo reenviado, revisa tu bandeja de entrada.';
+        }catch(err){
+          document.querySelector('.acc-status').textContent = 'No se pudo reenviar, espera un momento e inténtalo de nuevo.';
+        }
+      });
+      document.getElementById('checkVerifyBtn').addEventListener('click', async () => {
+        await reload(user);
+        renderAccountUI(auth.currentUser);
+      });
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await signOut(auth);
+      });
+      return;
+    }
+
+    // Cuenta verificada
+    accountBtn.classList.remove('unverified');
+    accountBtn.innerHTML = `<span class="avatar-chip">${iniciales(user.displayName, user.email)}</span>`;
+    accountMenu.innerHTML = `
+      <div class="acc-name">${user.displayName || 'Vendedor'}</div>
+      <div class="acc-email">${user.email}</div>
+      <div class="acc-balance">Saldo: $0.00</div>
+      <button class="acc-btn danger" id="logoutBtn">Cerrar sesión</button>
+    `;
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await signOut(auth);
+    });
+  }
+
+  onAuthStateChanged(auth, function(user){
+    accountMenu.classList.remove('open');
+    renderAccountUI(user);
+  });
+
+  // ---------- Selector de idioma: traducción ----------
+  // 1) Primero busca en un diccionario incorporado (funciona SIEMPRE, sin
+  //    depender de internet ni de ninguna API).
+  // 2) Si el texto no está en el diccionario (por ejemplo si agregas contenido
+  //    nuevo más adelante), intenta traducirlo automáticamente por API y lo
+  //    cachea. Si no hay internet disponible, deja el texto en español.
+  const LOCAL_DICT = {
+    en: {
+      "🚀 sitio de preventa": "🚀 presale site",
+      "Convierte tus ": "Turn your ",
+      "tarjetas de regalo": "gift cards",
+      " en dinero real.": " into real money.",
+      "Compra y vende tarjetas de Google Play, Amazon, Steam e iTunes, o cambia USDT desde Binance y KuCoin.": "Buy and sell Google Play, Amazon, Steam and iTunes gift cards, or exchange USDT from Binance and KuCoin.",
+      "Comprar gift cards": "Buy gift cards",
+      "Conviértete en vendedor": "Become a seller",
+      "Panamá": "Panama",
+      "Acerca de nosotros": "About us",
+      "Ayuda": "Help",
+      "Tienda directa": "Direct store",
+      "Estas las compramos nosotros al mayoreo y las vendemos con entrega automática en cuanto se confirma el pago.": "We buy these wholesale and sell them with automatic delivery as soon as payment is confirmed.",
+      "Google Play": "Google Play",
+      "Códigos de cualquier denominación, entrega por correo.": "Codes for any denomination, delivered by email.",
+      "Amazon": "Amazon",
+      "Códigos de tienda de EE. UU. y México.": "Store codes for the US and Mexico.",
+      "USDT": "USDT",
+      "Enviado directo a tu red seleccionada, Binance o KuCoin.": "Sent directly to your chosen network, Binance or KuCoin.",
+      "Quiero comprar": "I want to buy",
+      "Quiénes somos": "Who we are",
+      "Bitercards empieza como un proyecto pequeño con un solo dueño detrás, con la meta de crecer hasta convertirse en una app y, más adelante, una empresa que cotice en bolsa. Cada operación pasa por una verificación antes de liberar cualquier pago, para que tanto compradores como vendedores puedan confiar en la plataforma.": "Bitercards starts as a small project with a single owner behind it, aiming to grow into an app and, later on, a publicly traded company. Every transaction goes through a verification step before any payment is released, so both buyers and sellers can trust the platform.",
+      "Para la comunidad": "For the community",
+      "Publica lo que quieres cambiar, negocia con otro usuario y cierra la operación dentro de la plataforma. Bitercards cobra una comisión por servicio en cada transacción exitosa.": "Post what you want to exchange, negotiate with another user and close the deal within the platform. Bitercards charges a service fee on every successful transaction.",
+      "Publica en minutos": "List in minutes",
+      "Sube tu tarjeta o tu USDT y define tu precio.": "Upload your card or your USDT and set your price.",
+      "Operación verificada": "Verified transaction",
+      "Bitercards confirma ambas partes antes de liberar el pago.": "Bitercards confirms both parties before releasing payment.",
+      "Retiras cuando quieras": "Withdraw anytime",
+      "Tus ganancias quedan disponibles al cerrar cada operación.": "Your earnings become available as soon as each deal closes.",
+      "Nombre": "Name",
+      "Correo": "Email",
+      "¿Qué quieres vender?": "What do you want to sell?",
+      "Tarjetas de regalo": "Gift cards",
+      "Ambos": "Both",
+      "Registrarme como vendedor": "Sign up as a seller",
+      "Listo, recibimos tu registro. Te contactaremos pronto. 🎉": "Account created! We sent you an email to confirm your account, check your inbox (or spam).",
+      "¡Cuenta creada! Te enviamos un correo para confirmar tu cuenta, revisa tu bandeja de entrada (o spam).": "Account created! We sent you an email to confirm your account, check your inbox (or spam).",
+      "Bitercards. Sitio de preventa.": "Bitercards. Presale site.",
+      "Buscar tarjetas de regalo o USDT": "Search gift cards or USDT",
+      "Tu nombre": "Your name",
+      "Contraseña": "Password",
+      "Mínimo 6 caracteres": "At least 6 characters",
+      "¿Ya tienes cuenta?": "Already have an account?",
+      "Inicia sesión": "Sign in",
+      "Iniciar sesión": "Sign in",
+      "Cerrar sesión": "Log out",
+      "tucorreo@ejemplo.com": "youremail@example.com"
+    }
+  };
+
+  const langBtn = document.getElementById('langBtn');
+  const langBtnText = document.getElementById('langBtnText');
+  const langMenu = document.getElementById('langMenu');
+
+  const textEls = Array.from(document.querySelectorAll('[data-i18n]'));
+  const placeholderEls = Array.from(document.querySelectorAll('[data-i18n-placeholder]'));
+
+  // Guardar el texto original en español antes de tocar nada.
+  textEls.forEach(el => { if(!el.dataset.i18nSrc) el.dataset.i18nSrc = el.textContent; });
+  placeholderEls.forEach(el => { if(!el.dataset.i18nPhSrc) el.dataset.i18nPhSrc = el.placeholder; });
+
+  async function translateText(text, targetLang){
+    if(targetLang === 'es' || !text.trim()) return text;
+
+    // 1) Diccionario incorporado: instantáneo, sin internet.
+    if(LOCAL_DICT[targetLang] && LOCAL_DICT[targetLang][text] !== undefined){
+      return LOCAL_DICT[targetLang][text];
+    }
+
+    // 2) Caché de una traducción anterior por API.
+    const cacheKey = 'bitercards-mt:' + targetLang + ':' + text;
+    const cached = localStorage.getItem(cacheKey);
+    if(cached) return cached;
+
+    // 3) Texto nuevo, sin diccionario: intenta traducir por API (respaldo).
+    try{
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=es|' + targetLang;
+      const res = await fetch(url);
+      const data = await res.json();
+      const translated = (data && data.responseData && data.responseData.translatedText) ? data.responseData.translatedText : text;
+      localStorage.setItem(cacheKey, translated);
+      return translated;
+    }catch(err){
+      console.error('Sin conexión para traducir texto nuevo, se deja en español:', err);
+      return text;
+    }
+  }
+
+  async function applyLang(lang){
+    document.documentElement.lang = lang;
+    langBtnText.textContent = lang.toUpperCase();
+    langMenu.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+    });
+    localStorage.setItem('bitercards-lang', lang);
+
+    await Promise.all([
+      ...textEls.map(async el => {
+        el.textContent = await translateText(el.dataset.i18nSrc, lang);
+      }),
+      ...placeholderEls.map(async el => {
+        el.placeholder = await translateText(el.dataset.i18nPhSrc, lang);
+      })
+    ]);
+  }
+
+  langBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const isOpen = langMenu.classList.toggle('open');
+    langBtn.setAttribute('aria-expanded', isOpen);
+  });
+  langMenu.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyLang(btn.getAttribute('data-lang'));
+      langMenu.classList.remove('open');
+      langBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+  document.addEventListener('click', () => langMenu.classList.remove('open'));
+
+  const savedLang = localStorage.getItem('bitercards-lang') || 'es';
+  applyLang(savedLang);
+</script>
+
+</body>
+</html>
