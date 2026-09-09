@@ -393,6 +393,27 @@
   .form-switch{margin-top:14px; font-size:14px; color:#555;}
   .form-switch a{color:var(--blue); font-weight:700; text-decoration:underline;}
 
+  /* ---------- Tarjeta de producto comprable ---------- */
+  .product-card{
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    background:var(--surface);
+    border:2px solid rgba(17,17,17,0.08);
+    border-radius:18px;
+    padding:20px 22px;
+    margin:28px 0;
+    text-align:left;
+    box-shadow:0 10px 24px rgba(17,17,17,0.05);
+  }
+  .product-icon{flex-shrink:0;}
+  .product-info{flex:1 1 200px;}
+  .product-info h3{font-family:'Baloo 2', sans-serif; font-size:19px; margin-bottom:4px;}
+  .product-info .product-sub{font-weight:600; color:#777; font-size:15px;}
+  .product-info p{font-size:14px; color:#555; margin:0;}
+  .product-buy{display:flex; align-items:center; gap:14px; flex-shrink:0;}
+  .product-price{font-family:'Baloo 2', sans-serif; font-weight:800; font-size:22px; color:var(--ink);}
+  .product-card .form-error, .product-card .form-msg{flex-basis:100%; margin-top:4px;}
+  #buyUsdtBtn:disabled{opacity:.6; cursor:default;}
+
   /* ---------- Modal de login ---------- */
   .modal-overlay{
     display:none;
@@ -543,6 +564,27 @@
       <span class="tag" data-i18n="tagTienda">Tienda directa</span>
       <h2 data-i18n="h2Comprar">Comprar gift cards</h2>
       <p data-i18n="pComprar">Estas las compramos nosotros al mayoreo y las vendemos con entrega automática en cuanto se confirma el pago.</p>
+
+      <div class="product-card">
+        <div class="product-icon">
+          <svg viewBox="0 0 64 64" width="52" height="52">
+            <circle cx="32" cy="32" r="30" fill="#0B0E11"/>
+            <circle cx="32" cy="32" r="30" fill="none" stroke="#F0B90B" stroke-width="2.5"/>
+            <text x="32" y="41" text-anchor="middle" font-family="'Baloo 2', sans-serif" font-weight="800" font-size="26" fill="#F0B90B">₮</text>
+          </svg>
+        </div>
+        <div class="product-info">
+          <h3>1 USDT <span class="product-sub">· Binance</span></h3>
+          <p>Entrega automática apenas se confirma el pago.</p>
+        </div>
+        <div class="product-buy">
+          <span class="product-price">$1.10</span>
+          <button id="buyUsdtBtn" class="btn btn-gold">Comprar</button>
+        </div>
+        <p class="form-error" id="buyError"></p>
+        <p class="form-msg" id="buySuccess"></p>
+      </div>
+
       <div class="cards">
         <div class="card green"><h3 data-i18n="cardGooglePlayTitle">Google Play</h3><p data-i18n="cardGooglePlayP">Códigos de cualquier denominación, entrega por correo.</p></div>
         <div class="card blue"><h3 data-i18n="cardAmazonTitle">Amazon</h3><p data-i18n="cardAmazonP">Códigos de tienda de EE. UU. y México.</p></div>
@@ -676,7 +718,45 @@
   overlay.addEventListener('click', closeDrawer);
   drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
 
-  // ---------- Mensajes de error de Firebase traducidos al español ----------
+  // ---------- Compra real: 1 USDT Binance vía FazerCards ----------
+  const buyUsdtBtn = document.getElementById('buyUsdtBtn');
+  const buyError = document.getElementById('buyError');
+  const buySuccess = document.getElementById('buySuccess');
+
+  buyUsdtBtn.addEventListener('click', async function(){
+    buyError.classList.remove('show');
+    buySuccess.classList.remove('show');
+    buyUsdtBtn.disabled = true;
+    const textoOriginal = buyUsdtBtn.textContent;
+    buyUsdtBtn.textContent = 'Procesando...';
+
+    try{
+      const res = await fetch('/.netlify/functions/order-giftcard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category_id: 'binance_usdt',
+          card_id: '1_usd',
+          quantity: 1
+        })
+      });
+      const data = await res.json();
+
+      if(!res.ok){
+        buyError.textContent = data.error || 'No se pudo completar la compra, intenta de nuevo.';
+        buyError.classList.add('show');
+      }else{
+        buySuccess.textContent = 'Compra realizada. Código: ' + (data.code || JSON.stringify(data));
+        buySuccess.classList.add('show');
+      }
+    }catch(err){
+      buyError.textContent = 'No se pudo conectar con el servidor, intenta de nuevo.';
+      buyError.classList.add('show');
+    }finally{
+      buyUsdtBtn.disabled = false;
+      buyUsdtBtn.textContent = textoOriginal;
+    }
+  });
   function traducirErrorFirebase(code){
     const errores = {
       'auth/email-already-in-use': 'Ese correo ya está registrado. Intenta iniciar sesión en vez de registrarte.',
