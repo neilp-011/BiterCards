@@ -948,31 +948,29 @@
     <h3>Publicar anuncio</h3>
     <form id="publishAdForm">
       <div>
-        <label for="adTipo">¿Qué quieres vender?</label>
-        <select id="adTipo">
-          <option value="usdt">USDT</option>
-          <option value="giftcard">Tarjeta de regalo</option>
+        <label for="adTipo">Tarjeta</label>
+        <select id="adTipo" required>
+          <option value="" disabled selected>Selecciona una tarjeta</option>
+          <option value="amazon">🅰️ Amazon</option>
+          <option value="binance_usdt">₮ Binance USDT</option>
+          <option value="binance_usdc">Ⓤ Binance USDC</option>
+          <option value="google_play">▶️ Google Play</option>
+          <option value="free_fire">🔥 Free Fire</option>
         </select>
       </div>
-      <div id="adNombreWrap" style="display:none;">
-        <label for="adNombre">¿Cuál tarjeta?</label>
-        <input type="text" id="adNombre" placeholder="Ej: Amazon $25, Google Play $10">
+      <div>
+        <label for="adDenominacion">Valor de la tarjeta de regalo</label>
+        <select id="adDenominacion" required disabled>
+          <option value="" disabled selected>Elige primero la tarjeta</option>
+        </select>
       </div>
       <div>
-        <label for="adCantidad">Cantidad disponible</label>
-        <input type="number" id="adCantidad" min="1" placeholder="Ej: 100" required>
+        <label for="adCodigo">Código de la tarjeta</label>
+        <input type="file" id="adCodigo" accept="image/*,.txt" required>
       </div>
       <div>
-        <label for="adPrecio">Precio por unidad (USD)</label>
-        <input type="number" id="adPrecio" min="0.01" step="0.01" placeholder="Ej: 1.05" required>
-      </div>
-      <div>
-        <label>Métodos de pago que aceptas</label>
-        <div class="pay-options">
-          <label class="pay-check"><input type="checkbox" value="Yappy" checked> Yappy</label>
-          <label class="pay-check"><input type="checkbox" value="Transferencia"> Transferencia bancaria</label>
-          <label class="pay-check"><input type="checkbox" value="ACH"> ACH</label>
-        </div>
+        <label for="adPrecio">Precio de venta (USD)</label>
+        <input type="number" id="adPrecio" min="0.01" step="0.01" placeholder="Ej: 22.50" required>
       </div>
       <button type="submit" class="btn btn-gold" style="width:100%;">Publicar anuncio</button>
       <p class="form-msg" id="publishAdMsg">Anuncio publicado (vista de prueba, todavía no se guarda de verdad).</p>
@@ -1207,12 +1205,22 @@
   });
 
   // ---------- Modal: publicar anuncio ----------
+  // Catálogo de tarjetas soportadas: nombre, ícono/color para el anuncio,
+  // y denominaciones reales típicas de cada marca (investigadas, no inventadas).
+  const CARD_CATALOG = {
+    amazon:        { label: 'Amazon',        icon: '🅰️', color: '#FF9900', denominaciones: [10, 15, 25, 50, 100, 150, 200, 500] },
+    binance_usdt:  { label: 'Binance USDT',  icon: '₮',  color: '#26A17B', denominaciones: [5, 10, 15, 20, 25, 50, 100, 200, 500] },
+    binance_usdc:  { label: 'Binance USDC',  icon: 'Ⓤ',  color: '#2775CA', denominaciones: [5, 10, 15, 20, 25, 50, 100, 200, 500] },
+    google_play:   { label: 'Google Play',   icon: '▶️', color: '#01875f', denominaciones: [10, 15, 25, 50, 100, 200] },
+    free_fire:     { label: 'Free Fire',     icon: '🔥', color: '#F7A600', denominaciones: [1, 3, 5, 10, 20, 50] }
+  };
+
   const publishAdOverlay = document.getElementById('publishAdOverlay');
   const closePublishAdModal = document.getElementById('closePublishAdModal');
   const publishAdForm = document.getElementById('publishAdForm');
   const publishAdMsg = document.getElementById('publishAdMsg');
   const adTipo = document.getElementById('adTipo');
-  const adNombreWrap = document.getElementById('adNombreWrap');
+  const adDenominacion = document.getElementById('adDenominacion');
 
   closePublishAdModal.addEventListener('click', () => publishAdOverlay.classList.remove('show'));
   publishAdOverlay.addEventListener('click', function(e){
@@ -1220,18 +1228,28 @@
   });
 
   adTipo.addEventListener('change', function(){
-    adNombreWrap.style.display = adTipo.value === 'giftcard' ? 'block' : 'none';
+    const tarjeta = CARD_CATALOG[adTipo.value];
+    if(!tarjeta){
+      adDenominacion.innerHTML = '<option value="" disabled selected>Elige primero la tarjeta</option>';
+      adDenominacion.disabled = true;
+      return;
+    }
+    adDenominacion.innerHTML = '<option value="" disabled selected>Selecciona el valor</option>' +
+      tarjeta.denominaciones.map(v => `<option value="${v}">$${v}</option>`).join('');
+    adDenominacion.disabled = false;
   });
 
   publishAdForm.addEventListener('submit', function(e){
     e.preventDefault();
-    // TODO: cuando conectemos Firestore, aquí se guarda el anuncio de verdad.
+    // TODO: cuando conectemos Firestore, aquí se guarda el anuncio de verdad
+    // (incluyendo el ícono/color de CARD_CATALOG para pintarlo en la lista de anuncios).
     publishAdMsg.classList.add('show');
     setTimeout(() => {
       publishAdOverlay.classList.remove('show');
       publishAdMsg.classList.remove('show');
       publishAdForm.reset();
-      adNombreWrap.style.display = 'none';
+      adDenominacion.innerHTML = '<option value="" disabled selected>Elige primero la tarjeta</option>';
+      adDenominacion.disabled = true;
     }, 1800);
   });
 
