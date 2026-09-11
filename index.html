@@ -599,6 +599,20 @@
   }
   .ad-buy-btn{padding:9px 22px; font-size:14px;}
   .btn-green{background:var(--green); color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;}
+  .ad-card-visual{
+    margin:-16px -18px 12px -18px; padding:14px 18px;
+    border-radius:16px 16px 0 0;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .ad-visual-brand{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:15px;
+    letter-spacing:1px; color:#fff;
+  }
+  .ad-visual-strip{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 12px; border-radius:8px; color:#fff;
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:14px;
+  }
 
   /* ---------- Barra temporal de desarrollo ---------- */
   #devToggleBar{
@@ -982,6 +996,10 @@
         <label for="adPrecio">Precio de venta (USD)</label>
         <input type="number" id="adPrecio" min="0.01" step="0.01" placeholder="Ej: 22.50" required>
       </div>
+      <div>
+        <label for="adUbicacion">Ubicación</label>
+        <input type="text" id="adUbicacion" placeholder="Ej: Chiriquí, Panamá">
+      </div>
       <button type="submit" class="btn btn-gold" style="width:100%;">Publicar anuncio</button>
       <p class="form-msg" id="publishAdMsg">¡Anuncio publicado! Ya aparece en la lista de anuncios.</p>
     </form>
@@ -1215,16 +1233,18 @@
   });
 
   // ---------- Modal: publicar anuncio ----------
-  // Catálogo de tarjetas soportadas: nombre e ícono/color para pintar el "logo" del anuncio.
-  // Nota: son íconos de color propios (no los logos oficiales de cada marca, que están
-  // protegidos por derechos de marca); si más adelante consigues los logos reales con
-  // licencia de uso, se pueden reemplazar aquí por <img> sin tocar el resto del código.
+  // Catálogo de tarjetas soportadas: nombre, color de marca y texto de la franja
+  // para armar un "mockup" de tarjeta propio (fondo oscuro + franja de color),
+  // inspirado en el estilo de las gift cards reales pero SIN usar los logos oficiales
+  // de Amazon/Binance/Tether/etc., que son marcas registradas y no se pueden reproducir.
+  // Si más adelante consigues esos logos con licencia de uso, se reemplaza el texto
+  // "brand" de cada tarjeta por un <img> real sin tocar el resto del código.
   const CARD_CATALOG = {
-    amazon:        { label: 'Amazon',        icon: 'a', color: '#FF9900' },
-    binance_usdt:  { label: 'Binance USDT',  icon: '₮', color: '#26A17B' },
-    binance_usdc:  { label: 'Binance USDC',  icon: '$', color: '#2775CA' },
-    google_play:   { label: 'Google Play',   icon: '▶', color: '#01875f' },
-    free_fire:     { label: 'Free Fire',     icon: '🔥', color: '#F7A600' }
+    amazon:        { label: 'Amazon',        brand: 'AMAZON',  color: '#FF9900', dark: '#131921' },
+    binance_usdt:  { label: 'Binance USDT',  brand: 'BINANCE', color: '#26A17B', dark: '#0B0E11', unidad: 'USDT' },
+    binance_usdc:  { label: 'Binance USDC',  brand: 'BINANCE', color: '#2775CA', dark: '#0B0E11', unidad: 'USDC' },
+    google_play:   { label: 'Google Play',   brand: 'GOOGLE PLAY', color: '#01875f', dark: '#1a1a1a' },
+    free_fire:     { label: 'Free Fire',     brand: 'FREE FIRE', color: '#F7A600', dark: '#1a0d00' }
   };
 
   const publishAdOverlay = document.getElementById('publishAdOverlay');
@@ -1236,6 +1256,7 @@
   const adCodigoImagen = document.getElementById('adCodigoImagen');
   const adCodigoTexto = document.getElementById('adCodigoTexto');
   const adPrecio = document.getElementById('adPrecio');
+  const adUbicacion = document.getElementById('adUbicacion');
   const adsList = document.getElementById('adsList');
   const misAnunciosList = document.getElementById('misAnunciosList');
   const misAnunciosVacio = document.getElementById('misAnunciosVacio');
@@ -1267,23 +1288,36 @@
   }
 
   function crearTarjetaAnuncio(anuncio){
-    const tarjeta = CARD_CATALOG[anuncio.tipo] || { label: anuncio.tipo, icon: '?', color: 'var(--ink)' };
+    const tarjeta = CARD_CATALOG[anuncio.tipo] || { label: anuncio.tipo, brand: anuncio.tipo, color: 'var(--ink)', dark: '#111' };
     const div = document.createElement('div');
     div.className = 'ad-card';
     div.innerHTML = `
-      <div class="ad-card-top">
-        <div class="ad-seller">
-          <span class="ad-card-logo" style="background:${tarjeta.color};">${tarjeta.icon}</span>
-          <div>
-            <div class="ad-seller-name">${anuncio.vendedor}</div>
-            <div class="ad-seller-stats">${tarjeta.label} · $${anuncio.denominacion}</div>
-          </div>
+      <div class="ad-card-visual" style="background:${tarjeta.dark};">
+        <span class="ad-visual-brand" style="color:${tarjeta.color};">${tarjeta.brand}</span>
+        <div class="ad-visual-strip" style="background:${tarjeta.color};">
+          <span>${tarjeta.unidad || tarjeta.label}</span>
+          <span>$${anuncio.denominacion}</span>
         </div>
-        <div class="ad-price">$${Number(anuncio.precio).toFixed(2)}</div>
       </div>
-      <div class="ad-card-bottom">
-        <span></span>
-        <button class="btn btn-green ad-buy-btn">Comprar</button>
+      <div class="ad-card-info">
+        <div class="ad-card-top">
+          <div class="ad-seller">
+            <span class="avatar-chip" style="background:${tarjeta.color};">${(anuncio.vendedor || 'V').charAt(0).toUpperCase()}</span>
+            <div>
+              <div class="ad-seller-name">${anuncio.vendedor}</div>
+              <div class="ad-seller-stats">${anuncio.ubicacion || 'Ubicación no indicada'}</div>
+            </div>
+          </div>
+          <div class="ad-price">$${Number(anuncio.precio).toFixed(2)}</div>
+        </div>
+        <div class="ad-card-mid">
+          <span>Tarjeta: ${tarjeta.label}</span>
+          <span>Valor: $${anuncio.denominacion}</span>
+        </div>
+        <div class="ad-card-bottom">
+          <span></span>
+          <button class="btn btn-green ad-buy-btn">Comprar</button>
+        </div>
       </div>
     `;
     return div;
@@ -1323,6 +1357,7 @@
         codigoTexto: adCodigoTexto.value || null,
         codigoImagenNombre: (adCodigoImagen.files && adCodigoImagen.files[0]) ? adCodigoImagen.files[0].name : null,
         precio: adPrecio.value,
+        ubicacion: adUbicacion.value || null,
         uid: user ? (user.uid || user.email) : 'anon',
         vendedor: (user && (user.displayName || user.email)) || 'Vendedor',
         fecha: new Date().toISOString()
