@@ -472,6 +472,12 @@
     font-weight:800; font-size:12px; font-family:'Baloo 2', sans-serif;
   }
   .cart-btn.unverified{color:#C08A16;}
+  .ad-card-logo{
+    width:36px; height:36px; border-radius:9px;
+    color:#fff; font-weight:800; font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--line); flex-shrink:0;
+  }
 
   footer{padding:28px 0; border-top:3px solid var(--line); font-size:13px; color:#3A3A3A; text-align:center;}
 
@@ -849,7 +855,9 @@
 
     <div class="seller-profile" style="margin-top:20px;">
       <h3 style="font-family:'Baloo 2', sans-serif; margin-bottom:10px;">Mis anuncios activos</h3>
-      <p style="color:#777; font-size:14px;">Todavía no has publicado ningún anuncio.</p>
+      <div id="misAnunciosList">
+        <p id="misAnunciosVacio" style="color:#777; font-size:14px;">Todavía no has publicado ningún anuncio.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1207,13 +1215,16 @@
   });
 
   // ---------- Modal: publicar anuncio ----------
-  // Catálogo de tarjetas soportadas: nombre e ícono/color para pintar el anuncio.
+  // Catálogo de tarjetas soportadas: nombre e ícono/color para pintar el "logo" del anuncio.
+  // Nota: son íconos de color propios (no los logos oficiales de cada marca, que están
+  // protegidos por derechos de marca); si más adelante consigues los logos reales con
+  // licencia de uso, se pueden reemplazar aquí por <img> sin tocar el resto del código.
   const CARD_CATALOG = {
-    amazon:        { label: 'Amazon',        icon: 'A', color: '#FF9900' },
+    amazon:        { label: 'Amazon',        icon: 'a', color: '#FF9900' },
     binance_usdt:  { label: 'Binance USDT',  icon: '₮', color: '#26A17B' },
-    binance_usdc:  { label: 'Binance USDC',  icon: 'U', color: '#2775CA' },
-    google_play:   { label: 'Google Play',   icon: 'G', color: '#01875f' },
-    free_fire:     { label: 'Free Fire',     icon: 'F', color: '#F7A600' }
+    binance_usdc:  { label: 'Binance USDC',  icon: '$', color: '#2775CA' },
+    google_play:   { label: 'Google Play',   icon: '▶', color: '#01875f' },
+    free_fire:     { label: 'Free Fire',     icon: '🔥', color: '#F7A600' }
   };
 
   const publishAdOverlay = document.getElementById('publishAdOverlay');
@@ -1226,20 +1237,27 @@
   const adCodigoTexto = document.getElementById('adCodigoTexto');
   const adPrecio = document.getElementById('adPrecio');
   const adsList = document.getElementById('adsList');
+  const misAnunciosList = document.getElementById('misAnunciosList');
+  const misAnunciosVacio = document.getElementById('misAnunciosVacio');
 
   closePublishAdModal.addEventListener('click', () => publishAdOverlay.classList.remove('show'));
   publishAdOverlay.addEventListener('click', function(e){
     if(e.target === publishAdOverlay) publishAdOverlay.classList.remove('show');
   });
 
-  // ---------- Anuncios: publicar de verdad (por ahora guardado local, visible para
-  // cualquiera que abra este archivo en este navegador; luego se conecta a Firestore
-  // para que sea visible para todos de verdad, y se restringe a vendedores verificados) ----------
+  // ---------- Anuncios: publicar de verdad (por ahora guardado local en este navegador,
+  // para poder probar el flujo completo; luego se conecta a Firestore para que sea
+  // visible para todos de verdad, y se restringe a vendedores con KYC verificado) ----------
   const ADS_STORAGE_KEY = 'bitercardsAds';
 
   function cargarAnunciosGuardados(){
-    try{ return JSON.parse(localStorage.getItem(ADS_STORAGE_KEY)) || []; }
-    catch(err){ return []; }
+    try{
+      const guardado = JSON.parse(localStorage.getItem(ADS_STORAGE_KEY));
+      return Array.isArray(guardado) ? guardado : [];
+    }catch(err){
+      console.error('No se pudieron leer los anuncios guardados:', err);
+      return [];
+    }
   }
 
   function guardarAnuncio(anuncio){
@@ -1255,7 +1273,7 @@
     div.innerHTML = `
       <div class="ad-card-top">
         <div class="ad-seller">
-          <span class="avatar-chip" style="background:${tarjeta.color};">${tarjeta.icon}</span>
+          <span class="ad-card-logo" style="background:${tarjeta.color};">${tarjeta.icon}</span>
           <div>
             <div class="ad-seller-name">${anuncio.vendedor}</div>
             <div class="ad-seller-stats">${tarjeta.label} · $${anuncio.denominacion}</div>
@@ -1271,38 +1289,61 @@
     return div;
   }
 
-  function pintarAnunciosGuardados(){
+  function pintarTodosLosAnuncios(){
+    adsList.querySelectorAll('.ad-card[data-generado]').forEach(el => el.remove());
     cargarAnunciosGuardados().forEach(anuncio => {
-      adsList.prepend(crearTarjetaAnuncio(anuncio));
+      const tarjetaEl = crearTarjetaAnuncio(anuncio);
+      tarjetaEl.setAttribute('data-generado', '1');
+      adsList.prepend(tarjetaEl);
     });
   }
-  pintarAnunciosGuardados();
+
+  function pintarMisAnuncios(user){
+    const miId = user ? (user.uid || user.email) : null;
+    const misAnuncios = cargarAnunciosGuardados().filter(a => a.uid && a.uid === miId);
+    misAnunciosList.querySelectorAll('.ad-card').forEach(el => el.remove());
+    if(misAnuncios.length === 0){
+      if(misAnunciosVacio) misAnunciosVacio.style.display = '';
+      return;
+    }
+    if(misAnunciosVacio) misAnunciosVacio.style.display = 'none';
+    misAnuncios.forEach(anuncio => misAnunciosList.appendChild(crearTarjetaAnuncio(anuncio)));
+  }
+
+  pintarTodosLosAnuncios();
+  pintarMisAnuncios(auth.currentUser);
 
   publishAdForm.addEventListener('submit', function(e){
     e.preventDefault();
+    try{
+      const user = auth.currentUser;
+      const anuncio = {
+        tipo: adTipo.value,
+        denominacion: adDenominacion.value,
+        codigoTexto: adCodigoTexto.value || null,
+        codigoImagenNombre: (adCodigoImagen.files && adCodigoImagen.files[0]) ? adCodigoImagen.files[0].name : null,
+        precio: adPrecio.value,
+        uid: user ? (user.uid || user.email) : 'anon',
+        vendedor: (user && (user.displayName || user.email)) || 'Vendedor',
+        fecha: new Date().toISOString()
+      };
 
-    const user = auth.currentUser;
-    const anuncio = {
-      tipo: adTipo.value,
-      denominacion: adDenominacion.value,
-      codigoTexto: adCodigoTexto.value || null,
-      codigoImagenNombre: adCodigoImagen.files[0] ? adCodigoImagen.files[0].name : null,
-      precio: adPrecio.value,
-      vendedor: (user && (user.displayName || user.email)) || 'Vendedor',
-      fecha: new Date().toISOString()
-    };
+      // TODO: cuando conectemos Firestore, esto se sube al servidor y se restringe
+      // a vendedores con KYC verificado. Por ahora se guarda local para poder probarlo.
+      guardarAnuncio(anuncio);
+      pintarTodosLosAnuncios();
+      pintarMisAnuncios(user);
 
-    // TODO: cuando conectemos Firestore, esto se sube al servidor y se restringe
-    // a vendedores con KYC verificado. Por ahora se guarda local para poder probarlo.
-    guardarAnuncio(anuncio);
-    adsList.prepend(crearTarjetaAnuncio(anuncio));
-
-    publishAdMsg.classList.add('show');
-    setTimeout(() => {
-      publishAdOverlay.classList.remove('show');
-      publishAdMsg.classList.remove('show');
-      publishAdForm.reset();
-    }, 1800);
+      publishAdMsg.classList.add('show');
+      setTimeout(() => {
+        publishAdOverlay.classList.remove('show');
+        publishAdMsg.classList.remove('show');
+        publishAdForm.reset();
+      }, 1800);
+    }catch(err){
+      console.error('No se pudo publicar el anuncio:', err);
+      alert('Hubo un problema publicando el anuncio, revisa la consola.');
+    }
   });
 
   document.getElementById('goViewAds').addEventListener('click', function(){
@@ -1522,6 +1563,7 @@
     accountMenu.classList.remove('open');
     renderAccountUI(user);
     renderSellerProfile(user);
+    pintarMisAnuncios(user);
   });
 
   // ---------- Selector de idioma: traducción ----------
