@@ -494,6 +494,48 @@
     color:var(--ink); padding:6px 4px;
   }
   .page-view-title{font-family:'Baloo 2', sans-serif; font-weight:800; font-size:17px;}
+
+  /* ---------- Perfil de vendedor ---------- */
+  .seller-profile{
+    background:var(--surface);
+    border:2px solid rgba(17,17,17,0.08);
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:24px;
+  }
+  .seller-profile-top{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .seller-avatar{
+    width:56px; height:56px; border-radius:50%;
+    background:var(--blue); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:22px;
+    flex-shrink:0;
+  }
+  .seller-name-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .seller-name{font-family:'Baloo 2', sans-serif; font-weight:800; font-size:19px;}
+  .seller-email{font-size:13px; color:#777;}
+  .verify-badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11.5px; font-weight:700;
+    padding:3px 10px; border-radius:999px;
+  }
+  .verify-badge.pending{background:#FFF4DA; color:#8A6A16;}
+  .verify-badge.verified{background:rgba(29,185,84,0.14); color:#1A9A47;}
+  .seller-since{font-size:12.5px; color:#8A8A82; margin-top:2px;}
+  .seller-stats{
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:10px; margin-top:20px;
+  }
+  .seller-stat{
+    background:#fff; border:1px solid #E4E4E0; border-radius:12px;
+    padding:12px 10px; text-align:center;
+  }
+  .seller-stat .num{font-family:'Baloo 2', sans-serif; font-weight:800; font-size:18px;}
+  .seller-stat .lbl{font-size:11.5px; color:#777; margin-top:2px;}
+  .seller-login-msg{
+    text-align:center; padding:20px 10px;
+  }
+  .seller-login-msg p{margin-bottom:14px; color:#555;}
 </style>
 </head>
 <body>
@@ -677,6 +719,10 @@
   </div>
 
   <div class="wrap" style="padding-top:32px;">
+    <div id="sellerProfileCard" class="seller-profile">
+      <!-- Se rellena dinámicamente por JS según el estado de sesión -->
+    </div>
+
     <span class="tag">Marketplace entre usuarios</span>
     <h2>Compra y venta entre vendedores verificados</h2>
     <p>Aquí vas a poder publicar lo que quieres cambiar y comprarle directo a otros usuarios de Bitercards. Estamos construyendo esta sección paso a paso.</p>
@@ -764,7 +810,57 @@
   overlay.addEventListener('click', closeDrawer);
   drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
 
-  // ---------- Sub-página: Compra y venta ----------
+  // ---------- Perfil de vendedor (dentro de Compra y venta) ----------
+  const sellerProfileCard = document.getElementById('sellerProfileCard');
+
+  function fechaLegible(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  }
+
+  function renderSellerProfile(user){
+    if(!user){
+      sellerProfileCard.innerHTML = `
+        <div class="seller-login-msg">
+          <p>Inicia sesión o crea una cuenta para tener tu perfil de vendedor.</p>
+          <button class="btn btn-blue" id="profileLoginBtn">Iniciar sesión</button>
+        </div>
+      `;
+      document.getElementById('profileLoginBtn').addEventListener('click', () => {
+        document.getElementById('loginOverlay').classList.add('show');
+      });
+      return;
+    }
+
+    const inicial = (user.displayName || user.email || '?').charAt(0).toUpperCase();
+    const verificado = false; // placeholder: se conecta con el sistema de KYC más adelante
+    const badge = verificado
+      ? '<span class="verify-badge verified">✓ Verificado</span>'
+      : '<span class="verify-badge pending">⏳ No verificado</span>';
+    const desde = user.metadata && user.metadata.creationTime
+      ? fechaLegible(user.metadata.creationTime)
+      : '';
+
+    sellerProfileCard.innerHTML = `
+      <div class="seller-profile-top">
+        <div class="seller-avatar">${inicial}</div>
+        <div>
+          <div class="seller-name-row">
+            <span class="seller-name">${user.displayName || 'Vendedor'}</span>
+            ${badge}
+          </div>
+          <div class="seller-email">${user.email}</div>
+          ${desde ? '<div class="seller-since">Miembro desde ' + desde + '</div>' : ''}
+        </div>
+      </div>
+      <div class="seller-stats">
+        <div class="seller-stat"><div class="num">0</div><div class="lbl">Operaciones</div></div>
+        <div class="seller-stat"><div class="num">—</div><div class="lbl">Calificación</div></div>
+        <div class="seller-stat"><div class="num">$0.00</div><div class="lbl">Saldo</div></div>
+      </div>
+    `;
+  }
   const mainContent = document.getElementById('mainContent');
   const marketplaceView = document.getElementById('marketplaceView');
   const openMarketplace = document.getElementById('openMarketplace');
@@ -983,6 +1079,7 @@
   onAuthStateChanged(auth, function(user){
     accountMenu.classList.remove('open');
     renderAccountUI(user);
+    renderSellerProfile(user);
   });
 
   // ---------- Selector de idioma: traducción ----------
