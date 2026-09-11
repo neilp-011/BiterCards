@@ -536,6 +536,63 @@
     text-align:center; padding:20px 10px;
   }
   .seller-login-msg p{margin-bottom:14px; color:#555;}
+
+  /* ---------- Dashboard del vendedor verificado ---------- */
+  .dashboard-actions{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+    margin-top:20px;
+  }
+  .dashboard-action-card{
+    background:#fff; border:2px solid rgba(17,17,17,0.08); border-radius:16px;
+    padding:20px 16px; text-align:center; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    transition:transform .12s ease, box-shadow .12s ease;
+    font-family:inherit;
+  }
+  .dashboard-action-card:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(17,17,17,0.08);}
+  .dac-icon{font-size:28px; margin-bottom:4px;}
+  .dac-title{font-family:'Baloo 2', sans-serif; font-weight:800; font-size:15px; color:var(--ink);}
+  .dac-sub{font-size:12px; color:#777;}
+
+  /* ---------- Página de anuncios (estilo P2P) ---------- */
+  .ads-toolbar{
+    padding:16px 24px; border-bottom:1px solid #E4E4E0;
+  }
+  .ads-tabs{display:flex; gap:8px; margin-bottom:12px;}
+  .ads-tab{
+    background:var(--surface); border:1px solid #E4E4E0; border-radius:999px;
+    padding:8px 20px; font-family:'Baloo 2', sans-serif; font-weight:700; font-size:14px;
+    color:#777; cursor:pointer;
+  }
+  .ads-tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .ads-filters{display:flex; gap:8px; flex-wrap:wrap;}
+  .ads-filter-chip{
+    background:#fff; border:1px solid #E4E4E0; border-radius:999px;
+    padding:6px 14px; font-size:12.5px; font-weight:600; color:#555;
+  }
+  .ads-list{padding:16px 24px 40px; display:flex; flex-direction:column; gap:14px; max-width:700px; margin:0 auto;}
+  .ad-card{
+    background:#fff; border:1px solid #E4E4E0; border-radius:16px;
+    padding:16px 18px;
+  }
+  .ad-card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .ad-seller{display:flex; align-items:center; gap:10px;}
+  .ad-seller-name{font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:5px;}
+  .ad-seller-stats{font-size:11.5px; color:#8A8A82;}
+  .ad-price{font-family:'Baloo 2', sans-serif; font-weight:800; font-size:20px; text-align:right;}
+  .ad-price span{font-size:11px; font-weight:600; color:#8A8A82; display:block;}
+  .ad-card-mid{
+    display:flex; justify-content:space-between; font-size:12.5px; color:#666;
+    margin:12px 0; padding:10px 0; border-top:1px dashed #E4E4E0; border-bottom:1px dashed #E4E4E0;
+  }
+  .ad-card-bottom{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+  .ad-payment-tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .pay-tag{
+    background:rgba(36,81,224,0.08); color:var(--blue); font-size:11px; font-weight:700;
+    padding:4px 10px; border-radius:999px;
+  }
+  .ad-buy-btn{padding:9px 22px; font-size:14px;}
+  .btn-green{background:var(--green); color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -732,6 +789,132 @@
       <h1 style="font-size:24px;">Esta sección se activará por completo cuando termine la verificación de identidad (KYC)</h1>
       <p>Por ahora estamos armando la estructura. Pronto vas a poder publicar tus tarjetas o USDT, ver ofertas de otros usuarios, y cerrar operaciones directo desde aquí.</p>
     </div>
+
+    <p style="margin-top:20px; text-align:center;">
+      <a href="#" id="demoVerifiedToggle" style="font-size:13px; color:#999; text-decoration:underline;">Vista previa como vendedor verificado (solo para pruebas)</a>
+    </p>
+  </div>
+</div>
+
+<div id="sellerDashboardView" class="page-view">
+  <div class="page-view-header">
+    <button class="back-btn" data-back-to="mainContent" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Volver
+    </button>
+    <span class="page-view-title">Mi cuenta P2P</span>
+  </div>
+
+  <div class="wrap" style="padding-top:32px;">
+    <div id="sellerProfileCardDashboard" class="seller-profile">
+      <!-- Se rellena dinámicamente por JS -->
+    </div>
+
+    <div class="dashboard-actions">
+      <button class="dashboard-action-card" id="goPublishAd">
+        <span class="dac-icon">📢</span>
+        <span class="dac-title">Publicar anuncio</span>
+        <span class="dac-sub">Ofrece tus tarjetas o USDT</span>
+      </button>
+      <button class="dashboard-action-card" id="goViewAds">
+        <span class="dac-icon">🛒</span>
+        <span class="dac-title">Ver anuncios</span>
+        <span class="dac-sub">Explora ofertas de otros usuarios</span>
+      </button>
+    </div>
+
+    <div class="seller-profile" style="margin-top:20px;">
+      <h3 style="font-family:'Baloo 2', sans-serif; margin-bottom:10px;">Mis anuncios activos</h3>
+      <p style="color:#777; font-size:14px;">Todavía no has publicado ningún anuncio.</p>
+    </div>
+  </div>
+</div>
+
+<div id="adsListView" class="page-view">
+  <div class="page-view-header">
+    <button class="back-btn" data-back-to="sellerDashboardView" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Volver
+    </button>
+    <span class="page-view-title">Anuncios</span>
+  </div>
+
+  <div class="ads-toolbar">
+    <div class="ads-tabs">
+      <button class="ads-tab active" data-mode="comprar">Comprar</button>
+      <button class="ads-tab" data-mode="vender">Vender</button>
+    </div>
+    <div class="ads-filters">
+      <span class="ads-filter-chip">₮ USDT</span>
+      <span class="ads-filter-chip">Monto ▾</span>
+      <span class="ads-filter-chip">Pago ▾</span>
+    </div>
+  </div>
+
+  <div class="ads-list" id="adsList">
+    <!-- Anuncios de ejemplo, se reemplazarán por datos reales de Firestore -->
+    <div class="ad-card">
+      <div class="ad-card-top">
+        <div class="ad-seller">
+          <span class="avatar-chip" style="background:var(--green);">C</span>
+          <div>
+            <div class="ad-seller-name">cosme_fulanito <span class="verify-badge verified" style="font-size:10px;">✓</span></div>
+            <div class="ad-seller-stats">312 operaciones · 99.9% positivas</div>
+          </div>
+        </div>
+        <div class="ad-price">$1.02<span>/USDT</span></div>
+      </div>
+      <div class="ad-card-mid">
+        <span>Límite: $2 - $216</span>
+        <span>Disponible: 212 USDT</span>
+      </div>
+      <div class="ad-card-bottom">
+        <div class="ad-payment-tags"><span class="pay-tag">Yappy</span><span class="pay-tag">Transferencia</span></div>
+        <button class="btn btn-green ad-buy-btn">Comprar</button>
+      </div>
+    </div>
+
+    <div class="ad-card">
+      <div class="ad-card-top">
+        <div class="ad-seller">
+          <span class="avatar-chip" style="background:var(--blue);">I</span>
+          <div>
+            <div class="ad-seller-name">inversiones_h <span class="verify-badge verified" style="font-size:10px;">✓</span></div>
+            <div class="ad-seller-stats">414 operaciones · 100% positivas</div>
+          </div>
+        </div>
+        <div class="ad-price">$1.03<span>/USDT</span></div>
+      </div>
+      <div class="ad-card-mid">
+        <span>Límite: $50 - $1,000</span>
+        <span>Disponible: 3,304 USDT</span>
+      </div>
+      <div class="ad-card-bottom">
+        <div class="ad-payment-tags"><span class="pay-tag">Yappy</span><span class="pay-tag">ACH</span></div>
+        <button class="btn btn-green ad-buy-btn">Comprar</button>
+      </div>
+    </div>
+
+    <div class="ad-card">
+      <div class="ad-card-top">
+        <div class="ad-seller">
+          <span class="avatar-chip" style="background:var(--gold); color:var(--ink);">T</span>
+          <div>
+            <div class="ad-seller-name">thewolf_ofw <span class="verify-badge verified" style="font-size:10px;">✓</span></div>
+            <div class="ad-seller-stats">184 operaciones · 99.2% positivas</div>
+          </div>
+        </div>
+        <div class="ad-price">$1.04<span>/USDT</span></div>
+      </div>
+      <div class="ad-card-mid">
+        <span>Límite: $15 - $510</span>
+        <span>Disponible: 500 USDT</span>
+      </div>
+      <div class="ad-card-bottom">
+        <div class="ad-payment-tags"><span class="pay-tag">Transferencia</span></div>
+        <button class="btn btn-green ad-buy-btn">Comprar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -811,7 +994,6 @@
   drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
 
   // ---------- Perfil de vendedor (dentro de Compra y venta) ----------
-  const sellerProfileCard = document.getElementById('sellerProfileCard');
 
   function fechaLegible(iso){
     if(!iso) return '';
@@ -820,14 +1002,21 @@
   }
 
   function renderSellerProfile(user){
+    [document.getElementById('sellerProfileCard'), document.getElementById('sellerProfileCardDashboard')].forEach(container => {
+      if(!container) return;
+      renderSellerProfileInto(container, user);
+    });
+  }
+
+  function renderSellerProfileInto(sellerProfileCard, user){
     if(!user){
       sellerProfileCard.innerHTML = `
         <div class="seller-login-msg">
           <p>Inicia sesión o crea una cuenta para tener tu perfil de vendedor.</p>
-          <button class="btn btn-blue" id="profileLoginBtn">Iniciar sesión</button>
+          <button class="btn btn-blue profile-login-btn">Iniciar sesión</button>
         </div>
       `;
-      document.getElementById('profileLoginBtn').addEventListener('click', () => {
+      sellerProfileCard.querySelector('.profile-login-btn').addEventListener('click', () => {
         document.getElementById('loginOverlay').classList.add('show');
       });
       return;
@@ -869,7 +1058,11 @@
   openMarketplace.addEventListener('click', function(e){
     e.preventDefault();
     mainContent.style.display = 'none';
-    marketplaceView.classList.add('active');
+    if(esVendedorVerificado()){
+      document.getElementById('sellerDashboardView').classList.add('active');
+    }else{
+      marketplaceView.classList.add('active');
+    }
     window.scrollTo(0, 0);
     // Cierra el menú lateral si estaba abierto
     document.getElementById('drawer').classList.remove('open');
@@ -880,6 +1073,63 @@
     marketplaceView.classList.remove('active');
     mainContent.style.display = '';
     window.scrollTo(0, 0);
+  });
+
+  // ---------- Demo: ver la vista de vendedor verificado sin KYC real ----------
+  // TEMPORAL: esto es solo para pruebas mientras no existe el sistema de KYC.
+  // Cuando esté listo, "esVendedorVerificado()" debe leer el estado real del
+  // usuario (por ejemplo un campo en Firestore) en vez de localStorage.
+  function esVendedorVerificado(){
+    return localStorage.getItem('bitercards-demo-verified') === 'true';
+  }
+
+  const demoVerifiedToggle = document.getElementById('demoVerifiedToggle');
+  const sellerDashboardView = document.getElementById('sellerDashboardView');
+  const adsListView = document.getElementById('adsListView');
+
+  demoVerifiedToggle.addEventListener('click', function(e){
+    e.preventDefault();
+    localStorage.setItem('bitercards-demo-verified', 'true');
+    marketplaceView.classList.remove('active');
+    sellerDashboardView.classList.add('active');
+    window.scrollTo(0, 0);
+  });
+
+  // Botón "Volver" genérico para cualquier página que tenga data-back-to
+  document.querySelectorAll('.back-btn[data-back-to]').forEach(btn => {
+    btn.addEventListener('click', function(){
+      const targetId = btn.getAttribute('data-back-to');
+      document.querySelectorAll('.page-view.active').forEach(v => v.classList.remove('active'));
+      if(targetId === 'mainContent'){
+        mainContent.style.display = '';
+      }else{
+        document.getElementById(targetId).classList.add('active');
+      }
+      window.scrollTo(0, 0);
+    });
+  });
+
+  document.getElementById('goPublishAd').addEventListener('click', function(){
+    alert('Próximamente: aquí vas a poder publicar tu anuncio con precio, cantidad y método de pago.');
+  });
+
+  document.getElementById('goViewAds').addEventListener('click', function(){
+    sellerDashboardView.classList.remove('active');
+    adsListView.classList.add('active');
+    window.scrollTo(0, 0);
+  });
+
+  document.querySelectorAll('.ads-tab').forEach(tab => {
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.ads-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.ad-buy-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+      alert('Próximamente: al comprar, tu dinero queda congelado hasta que confirmes que recibiste tu tarjeta o USDT (sistema de escrow).');
+    });
   });
   const buyUsdtBtn = document.getElementById('buyUsdtBtn');
   const buyError = document.getElementById('buyError');
