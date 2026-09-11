@@ -593,6 +593,25 @@
   }
   .ad-buy-btn{padding:9px 22px; font-size:14px;}
   .btn-green{background:var(--green); color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;}
+
+  /* ---------- Barra temporal de desarrollo ---------- */
+  #devToggleBar{
+    position:fixed; top:8px; right:8px; z-index:200;
+    display:none; gap:6px;
+    background:rgba(17,17,17,0.9);
+    padding:6px; border-radius:10px;
+  }
+  #devToggleBar.show{display:flex;}
+  #devToggleBar button{
+    background:#fff; border:none; border-radius:7px;
+    padding:6px 10px; font-size:11px; font-weight:700; cursor:pointer; color:var(--ink);
+  }
+  #devToggleBar button.active-view{background:var(--gold);}
+
+  /* ---------- Formulario de publicar anuncio ---------- */
+  .pay-options{display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+  .pay-check{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500;}
+  .pay-check input{width:auto;}
 </style>
 </head>
 <body>
@@ -766,6 +785,11 @@
   </section>
 </main>
 
+<div id="devToggleBar">
+  <button id="devShowLocked">🔒 Ver: No verificado</button>
+  <button id="devShowVerified">✅ Ver: Verificado</button>
+</div>
+
 <div id="marketplaceView" class="page-view">
   <div class="page-view-header">
     <button id="closeMarketplace" class="back-btn" aria-label="Volver">
@@ -918,6 +942,44 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="publishAdOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="closePublishAdModal" aria-label="Cerrar">✕</button>
+    <h3>Publicar anuncio</h3>
+    <form id="publishAdForm">
+      <div>
+        <label for="adTipo">¿Qué quieres vender?</label>
+        <select id="adTipo">
+          <option value="usdt">USDT</option>
+          <option value="giftcard">Tarjeta de regalo</option>
+        </select>
+      </div>
+      <div id="adNombreWrap" style="display:none;">
+        <label for="adNombre">¿Cuál tarjeta?</label>
+        <input type="text" id="adNombre" placeholder="Ej: Amazon $25, Google Play $10">
+      </div>
+      <div>
+        <label for="adCantidad">Cantidad disponible</label>
+        <input type="number" id="adCantidad" min="1" placeholder="Ej: 100" required>
+      </div>
+      <div>
+        <label for="adPrecio">Precio por unidad (USD)</label>
+        <input type="number" id="adPrecio" min="0.01" step="0.01" placeholder="Ej: 1.05" required>
+      </div>
+      <div>
+        <label>Métodos de pago que aceptas</label>
+        <div class="pay-options">
+          <label class="pay-check"><input type="checkbox" value="Yappy" checked> Yappy</label>
+          <label class="pay-check"><input type="checkbox" value="Transferencia"> Transferencia bancaria</label>
+          <label class="pay-check"><input type="checkbox" value="ACH"> ACH</label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;">Publicar anuncio</button>
+      <p class="form-msg" id="publishAdMsg">Anuncio publicado (vista de prueba, todavía no se guarda de verdad).</p>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="loginOverlay">
   <div class="modal-box">
     <button class="modal-close" id="closeLoginModal" aria-label="Cerrar">✕</button>
@@ -1055,6 +1117,32 @@
   const openMarketplace = document.getElementById('openMarketplace');
   const closeMarketplace = document.getElementById('closeMarketplace');
 
+  // ---------- Barra temporal de desarrollo (ver ambas vistas rápido) ----------
+  const devToggleBar = document.getElementById('devToggleBar');
+  const devShowLocked = document.getElementById('devShowLocked');
+  const devShowVerified = document.getElementById('devShowVerified');
+
+  function actualizarBotonesDevBar(){
+    devShowLocked.classList.toggle('active-view', !esVendedorVerificado());
+    devShowVerified.classList.toggle('active-view', esVendedorVerificado());
+  }
+
+  devShowLocked.addEventListener('click', function(){
+    localStorage.setItem('bitercards-demo-verified', 'false');
+    document.querySelectorAll('.page-view.active').forEach(v => v.classList.remove('active'));
+    marketplaceView.classList.add('active');
+    actualizarBotonesDevBar();
+    window.scrollTo(0, 0);
+  });
+
+  devShowVerified.addEventListener('click', function(){
+    localStorage.setItem('bitercards-demo-verified', 'true');
+    document.querySelectorAll('.page-view.active').forEach(v => v.classList.remove('active'));
+    document.getElementById('sellerDashboardView').classList.add('active');
+    actualizarBotonesDevBar();
+    window.scrollTo(0, 0);
+  });
+
   openMarketplace.addEventListener('click', function(e){
     e.preventDefault();
     mainContent.style.display = 'none';
@@ -1063,6 +1151,8 @@
     }else{
       marketplaceView.classList.add('active');
     }
+    devToggleBar.classList.add('show');
+    actualizarBotonesDevBar();
     window.scrollTo(0, 0);
     // Cierra el menú lateral si estaba abierto
     document.getElementById('drawer').classList.remove('open');
@@ -1072,6 +1162,7 @@
   closeMarketplace.addEventListener('click', function(){
     marketplaceView.classList.remove('active');
     mainContent.style.display = '';
+    devToggleBar.classList.remove('show');
     window.scrollTo(0, 0);
   });
 
@@ -1092,6 +1183,7 @@
     localStorage.setItem('bitercards-demo-verified', 'true');
     marketplaceView.classList.remove('active');
     sellerDashboardView.classList.add('active');
+    actualizarBotonesDevBar();
     window.scrollTo(0, 0);
   });
 
@@ -1102,6 +1194,7 @@
       document.querySelectorAll('.page-view.active').forEach(v => v.classList.remove('active'));
       if(targetId === 'mainContent'){
         mainContent.style.display = '';
+        devToggleBar.classList.remove('show');
       }else{
         document.getElementById(targetId).classList.add('active');
       }
@@ -1110,7 +1203,36 @@
   });
 
   document.getElementById('goPublishAd').addEventListener('click', function(){
-    alert('Próximamente: aquí vas a poder publicar tu anuncio con precio, cantidad y método de pago.');
+    document.getElementById('publishAdOverlay').classList.add('show');
+  });
+
+  // ---------- Modal: publicar anuncio ----------
+  const publishAdOverlay = document.getElementById('publishAdOverlay');
+  const closePublishAdModal = document.getElementById('closePublishAdModal');
+  const publishAdForm = document.getElementById('publishAdForm');
+  const publishAdMsg = document.getElementById('publishAdMsg');
+  const adTipo = document.getElementById('adTipo');
+  const adNombreWrap = document.getElementById('adNombreWrap');
+
+  closePublishAdModal.addEventListener('click', () => publishAdOverlay.classList.remove('show'));
+  publishAdOverlay.addEventListener('click', function(e){
+    if(e.target === publishAdOverlay) publishAdOverlay.classList.remove('show');
+  });
+
+  adTipo.addEventListener('change', function(){
+    adNombreWrap.style.display = adTipo.value === 'giftcard' ? 'block' : 'none';
+  });
+
+  publishAdForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    // TODO: cuando conectemos Firestore, aquí se guarda el anuncio de verdad.
+    publishAdMsg.classList.add('show');
+    setTimeout(() => {
+      publishAdOverlay.classList.remove('show');
+      publishAdMsg.classList.remove('show');
+      publishAdForm.reset();
+      adNombreWrap.style.display = 'none';
+    }, 1800);
   });
 
   document.getElementById('goViewAds').addEventListener('click', function(){
