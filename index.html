@@ -951,29 +951,31 @@
         <label for="adTipo">Tarjeta</label>
         <select id="adTipo" required>
           <option value="" disabled selected>Selecciona una tarjeta</option>
-          <option value="amazon">🅰️ Amazon</option>
-          <option value="binance_usdt">₮ Binance USDT</option>
-          <option value="binance_usdc">Ⓤ Binance USDC</option>
-          <option value="google_play">▶️ Google Play</option>
-          <option value="free_fire">🔥 Free Fire</option>
+          <option value="amazon">Amazon</option>
+          <option value="binance_usdt">Binance USDT</option>
+          <option value="binance_usdc">Binance USDC</option>
+          <option value="google_play">Google Play</option>
+          <option value="free_fire">Free Fire</option>
         </select>
       </div>
       <div>
-        <label for="adDenominacion">Valor de la tarjeta de regalo</label>
-        <select id="adDenominacion" required disabled>
-          <option value="" disabled selected>Elige primero la tarjeta</option>
-        </select>
+        <label for="adDenominacion">Valor de la tarjeta de regalo (USD)</label>
+        <input type="number" id="adDenominacion" min="0.01" step="0.01" placeholder="Ej: 25" required>
       </div>
       <div>
-        <label for="adCodigo">Código de la tarjeta</label>
-        <input type="file" id="adCodigo" accept="image/*,.txt" required>
+        <label for="adCodigoImagen">Código de la tarjeta (imagen)</label>
+        <input type="file" id="adCodigoImagen" accept="image/*">
+      </div>
+      <div>
+        <label for="adCodigoTexto">O escribe el código manualmente</label>
+        <input type="text" id="adCodigoTexto" placeholder="Ej: XXXX-XXXX-XXXX">
       </div>
       <div>
         <label for="adPrecio">Precio de venta (USD)</label>
         <input type="number" id="adPrecio" min="0.01" step="0.01" placeholder="Ej: 22.50" required>
       </div>
       <button type="submit" class="btn btn-gold" style="width:100%;">Publicar anuncio</button>
-      <p class="form-msg" id="publishAdMsg">Anuncio publicado (vista de prueba, todavía no se guarda de verdad).</p>
+      <p class="form-msg" id="publishAdMsg">¡Anuncio publicado! Ya aparece en la lista de anuncios.</p>
     </form>
   </div>
 </div>
@@ -1205,14 +1207,13 @@
   });
 
   // ---------- Modal: publicar anuncio ----------
-  // Catálogo de tarjetas soportadas: nombre, ícono/color para el anuncio,
-  // y denominaciones reales típicas de cada marca (investigadas, no inventadas).
+  // Catálogo de tarjetas soportadas: nombre e ícono/color para pintar el anuncio.
   const CARD_CATALOG = {
-    amazon:        { label: 'Amazon',        icon: '🅰️', color: '#FF9900', denominaciones: [10, 15, 25, 50, 100, 150, 200, 500] },
-    binance_usdt:  { label: 'Binance USDT',  icon: '₮',  color: '#26A17B', denominaciones: [5, 10, 15, 20, 25, 50, 100, 200, 500] },
-    binance_usdc:  { label: 'Binance USDC',  icon: 'Ⓤ',  color: '#2775CA', denominaciones: [5, 10, 15, 20, 25, 50, 100, 200, 500] },
-    google_play:   { label: 'Google Play',   icon: '▶️', color: '#01875f', denominaciones: [10, 15, 25, 50, 100, 200] },
-    free_fire:     { label: 'Free Fire',     icon: '🔥', color: '#F7A600', denominaciones: [1, 3, 5, 10, 20, 50] }
+    amazon:        { label: 'Amazon',        icon: 'A', color: '#FF9900' },
+    binance_usdt:  { label: 'Binance USDT',  icon: '₮', color: '#26A17B' },
+    binance_usdc:  { label: 'Binance USDC',  icon: 'U', color: '#2775CA' },
+    google_play:   { label: 'Google Play',   icon: 'G', color: '#01875f' },
+    free_fire:     { label: 'Free Fire',     icon: 'F', color: '#F7A600' }
   };
 
   const publishAdOverlay = document.getElementById('publishAdOverlay');
@@ -1221,35 +1222,86 @@
   const publishAdMsg = document.getElementById('publishAdMsg');
   const adTipo = document.getElementById('adTipo');
   const adDenominacion = document.getElementById('adDenominacion');
+  const adCodigoImagen = document.getElementById('adCodigoImagen');
+  const adCodigoTexto = document.getElementById('adCodigoTexto');
+  const adPrecio = document.getElementById('adPrecio');
+  const adsList = document.getElementById('adsList');
 
   closePublishAdModal.addEventListener('click', () => publishAdOverlay.classList.remove('show'));
   publishAdOverlay.addEventListener('click', function(e){
     if(e.target === publishAdOverlay) publishAdOverlay.classList.remove('show');
   });
 
-  adTipo.addEventListener('change', function(){
-    const tarjeta = CARD_CATALOG[adTipo.value];
-    if(!tarjeta){
-      adDenominacion.innerHTML = '<option value="" disabled selected>Elige primero la tarjeta</option>';
-      adDenominacion.disabled = true;
-      return;
-    }
-    adDenominacion.innerHTML = '<option value="" disabled selected>Selecciona el valor</option>' +
-      tarjeta.denominaciones.map(v => `<option value="${v}">$${v}</option>`).join('');
-    adDenominacion.disabled = false;
-  });
+  // ---------- Anuncios: publicar de verdad (por ahora guardado local, visible para
+  // cualquiera que abra este archivo en este navegador; luego se conecta a Firestore
+  // para que sea visible para todos de verdad, y se restringe a vendedores verificados) ----------
+  const ADS_STORAGE_KEY = 'bitercardsAds';
+
+  function cargarAnunciosGuardados(){
+    try{ return JSON.parse(localStorage.getItem(ADS_STORAGE_KEY)) || []; }
+    catch(err){ return []; }
+  }
+
+  function guardarAnuncio(anuncio){
+    const anuncios = cargarAnunciosGuardados();
+    anuncios.unshift(anuncio);
+    localStorage.setItem(ADS_STORAGE_KEY, JSON.stringify(anuncios));
+  }
+
+  function crearTarjetaAnuncio(anuncio){
+    const tarjeta = CARD_CATALOG[anuncio.tipo] || { label: anuncio.tipo, icon: '?', color: 'var(--ink)' };
+    const div = document.createElement('div');
+    div.className = 'ad-card';
+    div.innerHTML = `
+      <div class="ad-card-top">
+        <div class="ad-seller">
+          <span class="avatar-chip" style="background:${tarjeta.color};">${tarjeta.icon}</span>
+          <div>
+            <div class="ad-seller-name">${anuncio.vendedor}</div>
+            <div class="ad-seller-stats">${tarjeta.label} · $${anuncio.denominacion}</div>
+          </div>
+        </div>
+        <div class="ad-price">$${Number(anuncio.precio).toFixed(2)}</div>
+      </div>
+      <div class="ad-card-bottom">
+        <span></span>
+        <button class="btn btn-green ad-buy-btn">Comprar</button>
+      </div>
+    `;
+    return div;
+  }
+
+  function pintarAnunciosGuardados(){
+    cargarAnunciosGuardados().forEach(anuncio => {
+      adsList.prepend(crearTarjetaAnuncio(anuncio));
+    });
+  }
+  pintarAnunciosGuardados();
 
   publishAdForm.addEventListener('submit', function(e){
     e.preventDefault();
-    // TODO: cuando conectemos Firestore, aquí se guarda el anuncio de verdad
-    // (incluyendo el ícono/color de CARD_CATALOG para pintarlo en la lista de anuncios).
+
+    const user = auth.currentUser;
+    const anuncio = {
+      tipo: adTipo.value,
+      denominacion: adDenominacion.value,
+      codigoTexto: adCodigoTexto.value || null,
+      codigoImagenNombre: adCodigoImagen.files[0] ? adCodigoImagen.files[0].name : null,
+      precio: adPrecio.value,
+      vendedor: (user && (user.displayName || user.email)) || 'Vendedor',
+      fecha: new Date().toISOString()
+    };
+
+    // TODO: cuando conectemos Firestore, esto se sube al servidor y se restringe
+    // a vendedores con KYC verificado. Por ahora se guarda local para poder probarlo.
+    guardarAnuncio(anuncio);
+    adsList.prepend(crearTarjetaAnuncio(anuncio));
+
     publishAdMsg.classList.add('show');
     setTimeout(() => {
       publishAdOverlay.classList.remove('show');
       publishAdMsg.classList.remove('show');
       publishAdForm.reset();
-      adDenominacion.innerHTML = '<option value="" disabled selected>Elige primero la tarjeta</option>';
-      adDenominacion.disabled = true;
     }, 1800);
   });
 
