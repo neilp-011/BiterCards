@@ -273,6 +273,8 @@
   #drawer nav a:nth-child(1) .ico{background:rgba(29,185,84,0.12); color:#1A9A47;}
   #drawer nav a:nth-child(2) .ico{background:rgba(232,185,59,0.16); color:#9A7A16;}
   #drawer nav a:nth-child(3) .ico{background:rgba(36,81,224,0.12); color:var(--blue);}
+  #drawer nav a:nth-child(4) .ico{background:rgba(29,185,84,0.12); color:#1A9A47;}
+  #drawer nav a:nth-child(5) .ico{background:rgba(36,81,224,0.12); color:var(--blue);}
 
   .drawer-help{
     margin-top:auto;
@@ -647,6 +649,12 @@
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
       <span data-i18n="navComprar">Comprar gift cards</span>
     </a>
+    <a href="#gaming">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="4"/><path d="M8 10v4"/><path d="M6 12h4"/><circle cx="16" cy="10.5" r="1"/><circle cx="18.5" cy="13" r="1"/></svg></span>
+      <span data-i18n="navGaming">Gaming</span>
+    </a>
+    <!-- Clausurado temporalmente (P2P/marketplace en pausa): para reactivar,
+         descomenta estos dos enlaces del menú.
     <a href="#" id="openMarketplace">
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M5 7v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7"/><path d="M9 12h6"/></svg></span>
       <span data-i18n="navMarketplace">Compra y venta</span>
@@ -655,6 +663,7 @@
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-6 7 6v12"/><path d="M9 21v-6h6v6"/></svg></span>
       <span data-i18n="navVendedor">Conviértete en vendedor</span>
     </a>
+    -->
     <a href="#nosotros">
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
       <span data-i18n="navNosotros">Acerca de nosotros</span>
@@ -753,6 +762,22 @@
         <div class="card gold"><h3 data-i18n="cardUsdtTitle">USDT</h3><p data-i18n="cardUsdtP">Enviado directo a tu red seleccionada, Binance o KuCoin.</p></div>
       </div>
       <a href="#vendedor" class="btn btn-gold" style="margin-top:24px;" data-i18n="btnQuieroComprar">Quiero comprar</a>
+    </div>
+  </section>
+
+  <section id="gaming">
+    <div class="wrap">
+      <span class="tag">Tienda directa</span>
+      <h2>Gaming</h2>
+      <p>Tarjetas para tus plataformas de videojuegos favoritas, con entrega automática en cuanto se confirma el pago.</p>
+
+      <div class="cards">
+        <div class="card green"><h3>Steam</h3><p>Códigos de cualquier denominación para tu billetera Steam.</p></div>
+        <div class="card blue"><h3>PlayStation</h3><p>Saldo para PlayStation Network (PSN), juegos y suscripciones.</p></div>
+        <div class="card gold"><h3>Xbox</h3><p>Códigos para Xbox Live y Microsoft Store.</p></div>
+        <div class="card green"><h3>Roblox</h3><p>Robux para tu cuenta de Roblox.</p></div>
+      </div>
+      <a href="#vendedor" class="btn btn-gold" style="margin-top:24px;">Quiero comprar</a>
     </div>
   </section>
 
@@ -1045,8 +1070,19 @@
     getFirestore,
     doc,
     setDoc,
-    serverTimestamp
+    serverTimestamp,
+    collection,
+    addDoc,
+    query,
+    orderBy,
+    onSnapshot
   } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+  import {
+    getStorage,
+    ref as storageRef,
+    uploadBytes
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCp04dxbywcV73Fq2ZxPR9w1qynYgoVfxA",
@@ -1061,6 +1097,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const storage = getStorage(app);
   document.getElementById('year').textContent = new Date().getFullYear();
 
   const drawer = document.getElementById('drawer');
@@ -1169,6 +1206,7 @@
     window.scrollTo(0, 0);
   });
 
+  if(openMarketplace){
   openMarketplace.addEventListener('click', function(e){
     e.preventDefault();
     mainContent.style.display = 'none';
@@ -1184,6 +1222,7 @@
     document.getElementById('drawer').classList.remove('open');
     document.getElementById('overlay').classList.remove('open');
   });
+  }
 
   closeMarketplace.addEventListener('click', function(){
     marketplaceView.classList.remove('active');
@@ -1266,26 +1305,19 @@
     if(e.target === publishAdOverlay) publishAdOverlay.classList.remove('show');
   });
 
-  // ---------- Anuncios: publicar de verdad (por ahora guardado local en este navegador,
-  // para poder probar el flujo completo; luego se conecta a Firestore para que sea
-  // visible para todos de verdad, y se restringe a vendedores con KYC verificado) ----------
-  const ADS_STORAGE_KEY = 'bitercardsAds';
-
-  function cargarAnunciosGuardados(){
-    try{
-      const guardado = JSON.parse(localStorage.getItem(ADS_STORAGE_KEY));
-      return Array.isArray(guardado) ? guardado : [];
-    }catch(err){
-      console.error('No se pudieron leer los anuncios guardados:', err);
-      return [];
-    }
-  }
-
-  function guardarAnuncio(anuncio){
-    const anuncios = cargarAnunciosGuardados();
-    anuncios.unshift(anuncio);
-    localStorage.setItem(ADS_STORAGE_KEY, JSON.stringify(anuncios));
-  }
+  // ---------- Anuncios: ahora conectados a Firestore de verdad ----------
+  // Colección "anuncios" en Firestore. onSnapshot escucha cambios en vivo,
+  // así que cualquier persona que abra la página ve los anuncios de todos,
+  // sin recargar. Se restringe a usuarios logueados por las reglas de
+  // seguridad de Firestore (ver nota más abajo), no todavía por KYC.
+  //
+  // AVISO IMPORTANTE DE SEGURIDAD: por ahora el código de la tarjeta (texto)
+  // se guarda en el mismo documento público del anuncio, así que cualquiera
+  // que abra la página puede leerlo con las herramientas de desarrollador,
+  // no solo el comprador. Esto es temporal para probar el flujo — antes de
+  // usarlo con tarjetas reales hay que mover el código a una subcolección
+  // privada que solo se pueda leer después de que el escrow confirme el pago.
+  const anunciosCol = collection(db, 'anuncios');
 
   function crearTarjetaAnuncio(anuncio){
     const tarjeta = CARD_CATALOG[anuncio.tipo] || { label: anuncio.tipo, brand: anuncio.tipo, color: 'var(--ink)', dark: '#111' };
@@ -1323,18 +1355,20 @@
     return div;
   }
 
+  let todosLosAnunciosCache = [];
+
   function pintarTodosLosAnuncios(){
     adsList.querySelectorAll('.ad-card[data-generado]').forEach(el => el.remove());
-    cargarAnunciosGuardados().forEach(anuncio => {
+    todosLosAnunciosCache.forEach(anuncio => {
       const tarjetaEl = crearTarjetaAnuncio(anuncio);
       tarjetaEl.setAttribute('data-generado', '1');
-      adsList.prepend(tarjetaEl);
+      adsList.appendChild(tarjetaEl);
     });
   }
 
   function pintarMisAnuncios(user){
     const miId = user ? (user.uid || user.email) : null;
-    const misAnuncios = cargarAnunciosGuardados().filter(a => a.uid && a.uid === miId);
+    const misAnuncios = todosLosAnunciosCache.filter(a => a.uid && a.uid === miId);
     misAnunciosList.querySelectorAll('.ad-card').forEach(el => el.remove());
     if(misAnuncios.length === 0){
       if(misAnunciosVacio) misAnunciosVacio.style.display = '';
@@ -1344,30 +1378,51 @@
     misAnuncios.forEach(anuncio => misAnunciosList.appendChild(crearTarjetaAnuncio(anuncio)));
   }
 
-  pintarTodosLosAnuncios();
-  pintarMisAnuncios(auth.currentUser);
+  // Escucha en tiempo real: en cuanto alguien publica, se actualiza para todos
+  // los que tengan la página abierta, sin recargar.
+  onSnapshot(query(anunciosCol, orderBy('fecha', 'desc')), function(snapshot){
+    todosLosAnunciosCache = snapshot.docs.map(d => d.data());
+    pintarTodosLosAnuncios();
+    pintarMisAnuncios(auth.currentUser);
+  }, function(err){
+    console.error('No se pudieron cargar los anuncios de Firestore:', err);
+  });
 
-  publishAdForm.addEventListener('submit', function(e){
+  publishAdForm.addEventListener('submit', async function(e){
     e.preventDefault();
     try{
       const user = auth.currentUser;
+      if(!user){
+        alert('Debes iniciar sesión para publicar un anuncio.');
+        return;
+      }
+      // El documento PÚBLICO (lo que ve todo el mundo en la lista de anuncios)
+      // ya NO lleva el código ni la imagen — solo los datos de venta.
       const anuncio = {
         tipo: adTipo.value,
         denominacion: adDenominacion.value,
-        codigoTexto: adCodigoTexto.value || null,
-        codigoImagenNombre: (adCodigoImagen.files && adCodigoImagen.files[0]) ? adCodigoImagen.files[0].name : null,
         precio: adPrecio.value,
         ubicacion: adUbicacion.value || null,
-        uid: user ? (user.uid || user.email) : 'anon',
-        vendedor: (user && (user.displayName || user.email)) || 'Vendedor',
-        fecha: new Date().toISOString()
+        uid: user.uid,
+        vendedor: user.displayName || user.email || 'Vendedor',
+        fecha: serverTimestamp()
       };
+      const docRef = await addDoc(anunciosCol, anuncio);
 
-      // TODO: cuando conectemos Firestore, esto se sube al servidor y se restringe
-      // a vendedores con KYC verificado. Por ahora se guarda local para poder probarlo.
-      guardarAnuncio(anuncio);
-      pintarTodosLosAnuncios();
-      pintarMisAnuncios(user);
+      // El código (texto e imagen) se guarda APARTE, en una subcolección
+      // privada del mismo anuncio, protegida por las reglas de Firestore/Storage
+      // para que solo tú (vendedor) y, más adelante, el comprador que pagó
+      // puedan leerla — nunca cualquiera que visite la página.
+      let codigoImagenPath = null;
+      if(adCodigoImagen.files && adCodigoImagen.files[0]){
+        codigoImagenPath = `privado/${docRef.id}/imagen_${adCodigoImagen.files[0].name}`;
+        await uploadBytes(storageRef(storage, codigoImagenPath), adCodigoImagen.files[0]);
+      }
+      await setDoc(doc(db, 'anuncios', docRef.id, 'privado', 'codigo'), {
+        uid: user.uid,
+        codigoTexto: adCodigoTexto.value || null,
+        codigoImagenPath: codigoImagenPath
+      });
 
       publishAdMsg.classList.add('show');
       setTimeout(() => {
@@ -1377,7 +1432,7 @@
       }, 1800);
     }catch(err){
       console.error('No se pudo publicar el anuncio:', err);
-      alert('Hubo un problema publicando el anuncio, revisa la consola.');
+      alert('Hubo un problema publicando el anuncio: ' + err.message);
     }
   });
 
