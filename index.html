@@ -1641,22 +1641,43 @@
     accountMenu.innerHTML = `
       <div class="acc-name">${user.displayName || 'Vendedor'}</div>
       <div class="acc-email">${user.email}</div>
-      <div class="acc-balance" id="accBalanceDisplay">Saldo: $0.00</div>
-      <button class="acc-btn" id="btnRecargarSaldo">Recargar saldo</button>
+      ${paymentSystem !== 'ninguno' ? '<div class="acc-balance" id="accBalanceDisplay">Saldo: $0.00</div><button class="acc-btn" id="btnRecargarSaldo">Recargar saldo</button>' : ''}
       <button class="acc-btn danger" id="logoutBtn">Cerrar sesión</button>
     `;
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await signOut(auth);
     });
-    document.getElementById('btnRecargarSaldo').addEventListener('click', () => {
-      abrirModalRecarga();
-    });
-    escucharSaldo(user.uid);
+    if(paymentSystem !== 'ninguno'){
+      document.getElementById('btnRecargarSaldo').addEventListener('click', () => {
+        abrirModalRecarga();
+      });
+      escucharSaldo(user.uid);
+    }
   }
+
+  // ---------- Sistema de recarga de saldo (cripto vía NOWPayments) ----------
+  // Controlado 100% desde Netlify: Site configuration -> Environment variables
+  // -> variable "PAYMENT_SYSTEM". Solo tú puedes verla y cambiarla ahí.
+  //   "ninguno" -> nadie ve el botón (desactivado)
+  //   "libre"   -> el usuario escribe el monto que quiera (mínimo $1.10)
+  let paymentSystem = 'ninguno';
+  (async () => {
+    try{
+      const resp = await fetch('/.netlify/functions/get-payment-config');
+      const data = await resp.json();
+      paymentSystem = data.system || 'ninguno';
+      // Vuelve a pintar el menú de cuenta por si ya había un usuario logueado
+      // antes de que esta respuesta llegara.
+      if(auth.currentUser) renderAccountUI(auth.currentUser);
+    }catch(err){
+      paymentSystem = 'ninguno';
+    }
+  })();
 
   // ---------- Saldo en vivo (Firestore) ----------
   let unsubscribeSaldo = null;
   function escucharSaldo(uid){
+    if(paymentSystem === 'ninguno') return;
     if(unsubscribeSaldo) unsubscribeSaldo();
     unsubscribeSaldo = onSnapshot(doc(db, 'usuarios', uid), (snap) => {
       const saldo = snap.exists() && typeof snap.data().saldo === 'number' ? snap.data().saldo : 0;
@@ -1667,8 +1688,15 @@
 
   // ---------- Modal de recarga de saldo ----------
   function abrirModalRecarga(){
+    if(paymentSystem === 'ninguno') return;
     document.getElementById('errorRecarga').style.display = 'none';
-    document.getElementById('inputMontoRecarga').value = '';
+
+    const contenedorMonto = document.getElementById('contenedorMontoRecarga');
+    contenedorMonto.innerHTML = `
+      <p style="font-size:14px; color:#333;">Monto en USD (mínimo $1.10):</p>
+      <input id="inputMontoRecarga" type="number" min="1.1" step="0.1" placeholder="Ej: 20" style="width:100%; box-sizing:border-box; padding:10px; border:3px solid #000; border-radius:8px; font-size:16px; margin-bottom:16px;" />
+    `;
+
     document.getElementById('modalRecarga').style.display = 'flex';
   }
 
@@ -1677,6 +1705,7 @@
   });
 
   document.getElementById('btnConfirmarRecarga').addEventListener('click', async () => {
+    if(paymentSystem === 'ninguno') return;
     const errorEl = document.getElementById('errorRecarga');
     const btnConfirmar = document.getElementById('btnConfirmarRecarga');
     errorEl.style.display = 'none';
@@ -1689,8 +1718,8 @@
     }
 
     const monto = Number(document.getElementById('inputMontoRecarga').value);
-    if(!monto || monto < 5){
-      errorEl.textContent = 'Ingresa un monto válido (mínimo $5).';
+    if(!monto || monto < 1.1){
+      errorEl.textContent = 'Ingresa un monto válido (mínimo $1.10).';
       errorEl.style.display = 'block';
       return;
     }
@@ -1857,8 +1886,7 @@
 <div id="modalRecarga" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
   <div style="background:#fff; border:4px solid #000; border-radius:16px; box-shadow:8px 8px 0 #000; padding:24px; width:90%; max-width:360px; font-family:'Baloo 2', sans-serif;">
     <h2 style="margin-top:0;">Recargar saldo</h2>
-    <p style="font-size:14px; color:#333;">Monto en USD (mínimo $5):</p>
-    <input id="inputMontoRecarga" type="number" min="5" step="1" placeholder="Ej: 20" style="width:100%; box-sizing:border-box; padding:10px; border:3px solid #000; border-radius:8px; font-size:16px; margin-bottom:16px;" />
+    <div id="contenedorMontoRecarga"></div>
     <p id="errorRecarga" style="color:#d33; font-size:13px; display:none;"></p>
     <div style="display:flex; gap:10px;">
       <button id="btnConfirmarRecarga" style="flex:1; background:#7CFC9A; border:3px solid #000; border-radius:10px; padding:10px; font-weight:700; cursor:pointer; box-shadow:3px 3px 0 #000;">Continuar al pago</button>
