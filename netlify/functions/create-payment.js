@@ -22,9 +22,10 @@ exports.handler = async (event) => {
     if (!numericAmount || numericAmount <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Monto inválido' }) };
     }
-    // Límite mínimo razonable (NOWPayments suele rechazar montos muy pequeños)
-    if (numericAmount < 5) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'El monto mínimo de recarga es $5' }) };
+    // Límite mínimo razonable (NOWPayments rechaza pagos por debajo de ~1 USDT
+    // en la red TRC20; dejamos $1.10 de margen de seguridad)
+    if (numericAmount < 1.10) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'El monto mínimo de recarga es $1.10' }) };
     }
 
     const API_KEY = process.env.NOWPAYMENTS_API_KEY;
