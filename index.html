@@ -1659,7 +1659,7 @@
   // Controlado 100% desde Netlify: Site configuration -> Environment variables
   // -> variable "PAYMENT_SYSTEM". Solo tú puedes verla y cambiarla ahí.
   //   "ninguno" -> nadie ve el botón (desactivado)
-  //   "libre"   -> el usuario escribe el monto que quiera (mínimo $1.10)
+  //   "libre"   -> el usuario escribe el monto que quiera (mínimo $3)
   let paymentSystem = 'ninguno';
   (async () => {
     try{
@@ -1693,8 +1693,8 @@
 
     const contenedorMonto = document.getElementById('contenedorMontoRecarga');
     contenedorMonto.innerHTML = `
-      <p style="font-size:14px; color:#333;">Monto en USD (mínimo $1.10):</p>
-      <input id="inputMontoRecarga" type="number" min="1.1" step="0.1" placeholder="Ej: 20" style="width:100%; box-sizing:border-box; padding:10px; border:3px solid #000; border-radius:8px; font-size:16px; margin-bottom:16px;" />
+      <p style="font-size:14px; color:#333;">Monto en USD (mínimo $3):</p>
+      <input id="inputMontoRecarga" type="number" min="3" step="1" placeholder="Ej: 20" style="width:100%; box-sizing:border-box; padding:10px; border:3px solid #000; border-radius:8px; font-size:16px; margin-bottom:16px;" />
     `;
 
     document.getElementById('modalRecarga').style.display = 'flex';
@@ -1718,8 +1718,8 @@
     }
 
     const monto = Number(document.getElementById('inputMontoRecarga').value);
-    if(!monto || monto < 1.1){
-      errorEl.textContent = 'Ingresa un monto válido (mínimo $1.10).';
+    if(!monto || monto < 3){
+      errorEl.textContent = 'Ingresa un monto válido (mínimo $3).';
       errorEl.style.display = 'block';
       return;
     }
