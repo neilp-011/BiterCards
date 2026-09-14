@@ -1,12 +1,12 @@
 // netlify/functions/create-payment.js
 //
-// Esta función recibe: el uid del usuario logueado y el monto en USD que quiere recargar.
-// Crea una "factura" (invoice) en NOWPayments y devuelve el link de pago (invoice_url).
-// El usuario abre ese link, paga con USDT/USDC, y cuando el pago se confirma,
-// NOWPayments avisa a nowpayments-webhook.js, que ya se encarga de sumar el saldo.
+// Crea una factura (invoice) en Plisio para que el usuario recargue saldo.
+// Recibe el uid del usuario logueado y el monto en USD que quiere recargar.
+// Plisio devuelve un link de pago (invoice_url); el usuario paga ahí con
+// USDT, y cuando el pago se confirma, Plisio avisa a plisio-webhook.js,
+// que se encarga de sumar el saldo en Firestore.
 
 exports.handler = async (event) => {
-  // Solo aceptar POST
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -14,7 +14,6 @@ exports.handler = async (event) => {
   try {
     const { uid, amount } = JSON.parse(event.body || '{}');
 
-    // Validaciones básicas
     if (!uid || typeof uid !== 'string') {
       return { statusCode: 400, body: JSON.stringify({ error: 'Falta el uid del usuario' }) };
     }
@@ -22,48 +21,43 @@ exports.handler = async (event) => {
     if (!numericAmount || numericAmount <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Monto inválido' }) };
     }
-    // Límite mínimo razonable (NOWPayments rechaza pagos por debajo de ~1 USDT
-    // en la red TRC20; dejamos $1.10 de margen de seguridad)
-    if (numericAmount < 1.10) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'El monto mínimo de recarga es $1.10' }) };
+    if (numericAmount < 3) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'El monto mínimo de recarga es $3' }) };
     }
 
-    const API_KEY = process.env.NOWPAYMENTS_API_KEY;
-    if (!API_KEY) {
-      console.error('Falta NOWPAYMENTS_API_KEY en las variables de entorno');
+    const SECRET_KEY = process.env.PLISIO_SECRET_KEY;
+    if (!SECRET_KEY) {
+      console.error('Falta PLISIO_SECRET_KEY en las variables de entorno');
       return { statusCode: 500, body: JSON.stringify({ error: 'Configuración del servidor incompleta' }) };
     }
 
     const siteUrl = `https://${event.headers.host}`;
+    // order_number lleva el uid, para que el webhook sepa a quién sumarle el saldo.
+    // Le agregamos un timestamp para que cada intento tenga un identificador único.
+    const orderNumber = `${uid}_${Date.now()}`;
 
-    const nowResponse = await fetch('https://api.nowpayments.io/v1/invoice', {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        price_amount: numericAmount,
-        price_currency: 'usd',
-        order_id: uid, // el webhook usa esto para saber a quién sumarle el saldo
-        order_description: `Recarga de saldo Bitercards - ${numericAmount} USD`,
-        ipn_callback_url: `${siteUrl}/.netlify/functions/nowpayments-webhook`,
-        success_url: `${siteUrl}/?recarga=exitosa`,
-        cancel_url: `${siteUrl}/?recarga=cancelada`,
-      }),
+    const params = new URLSearchParams({
+      source_currency: 'USD',
+      source_amount: String(numericAmount),
+      order_number: orderNumber,
+      order_name: `Recarga de saldo Bitercards - $${numericAmount}`,
+      currency: 'USDT_TRX', // USDT en red TRON (TRC20), la más barata
+      callback_url: `${siteUrl}/.netlify/functions/plisio-webhook?json=true`,
+      success_url: `${siteUrl}/?recarga=exitosa`,
+      api_key: SECRET_KEY,
     });
 
-    const data = await nowResponse.json();
+    const plisioResponse = await fetch(`https://api.plisio.net/api/v1/invoices/new?${params.toString()}`);
+    const data = await plisioResponse.json();
 
-    if (!nowResponse.ok) {
-      console.error('Error de NOWPayments:', data);
+    if (data.status !== 'success') {
+      console.error('Error de Plisio:', data);
       return { statusCode: 502, body: JSON.stringify({ error: 'No se pudo crear el pago', details: data }) };
     }
 
-    // data.invoice_url es el link al que mandamos al usuario para que pague
     return {
       statusCode: 200,
-      body: JSON.stringify({ invoice_url: data.invoice_url }),
+      body: JSON.stringify({ invoice_url: data.data.invoice_url }),
     };
   } catch (err) {
     console.error('Error en create-payment:', err);
