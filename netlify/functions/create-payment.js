@@ -21,8 +21,8 @@ exports.handler = async (event) => {
     if (!numericAmount || numericAmount <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Monto inválido' }) };
     }
-    if (numericAmount < 3) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'El monto mínimo de recarga es $3' }) };
+    if (numericAmount < 1) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'El monto mínimo de recarga es $1' }) };
     }
 
     const SECRET_KEY = process.env.PLISIO_SECRET_KEY;
@@ -41,7 +41,8 @@ exports.handler = async (event) => {
       source_amount: String(numericAmount),
       order_number: orderNumber,
       order_name: `Recarga de saldo Bitercards - $${numericAmount}`,
-      currency: 'USDT_TRX', // USDT en red TRON (TRC20), la más barata
+      // No fijamos "currency": así el cliente puede elegir entre TODAS las
+      // monedas que hayas activado en "Monedas admitidas" en tu panel de Plisio.
       callback_url: `${siteUrl}/.netlify/functions/plisio-webhook?json=true`,
       success_url: `${siteUrl}/?recarga=exitosa`,
       api_key: SECRET_KEY,
